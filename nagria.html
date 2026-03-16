@@ -1,0 +1,2223 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ניהול נגרייה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #dbeafe;
+    --success: #16a34a;
+    --success-light: #dcfce7;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --orange: #ea580c;
+    --orange-light: #ffedd5;
+    --sidebar-bg: #0f172a;
+    --sidebar-hover: #1e293b;
+    --sidebar-active: #2563eb;
+    --sidebar-text: #94a3b8;
+    --sidebar-text-active: #ffffff;
+    --content-bg: #f1f5f9;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  body { font-family: 'Heebo', sans-serif; background: var(--content-bg); color: var(--text-primary); display: flex; min-height: 100vh; overflow-x: hidden; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 260px; min-height: 100vh; background: var(--sidebar-bg); position: fixed; top: 0; right: 0; z-index: 100;
+    display: flex; flex-direction: column; transition: transform 0.3s ease;
+  }
+  .sidebar-logo {
+    padding: 28px 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .sidebar-logo .logo-icon {
+    width: 44px; height: 44px; background: var(--primary); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+  }
+  .sidebar-logo .logo-icon i { color: white; font-size: 20px; }
+  .sidebar-logo h1 { color: white; font-size: 18px; font-weight: 700; line-height: 1.2; }
+  .sidebar-logo p { color: var(--sidebar-text); font-size: 12px; margin-top: 2px; }
+
+  .sidebar-nav { padding: 16px 12px; flex: 1; }
+  .nav-section-title {
+    color: var(--text-muted); font-size: 10px; font-weight: 600; letter-spacing: 1px;
+    text-transform: uppercase; padding: 8px 12px 4px; margin-top: 8px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius-sm);
+    color: var(--sidebar-text); cursor: pointer; transition: all 0.2s; margin-bottom: 2px; font-size: 14px; font-weight: 500;
+  }
+  .nav-item:hover { background: var(--sidebar-hover); color: white; }
+  .nav-item.active { background: var(--primary); color: white; }
+  .nav-item i { width: 18px; text-align: center; font-size: 16px; }
+  .nav-badge {
+    margin-right: auto; background: var(--primary); color: white; font-size: 10px; font-weight: 700;
+    padding: 2px 6px; border-radius: 10px; line-height: 1.4;
+  }
+  .nav-item.active .nav-badge { background: rgba(255,255,255,0.25); }
+
+  .sidebar-footer {
+    padding: 16px; border-top: 1px solid rgba(255,255,255,0.07);
+    color: var(--sidebar-text); font-size: 12px; text-align: center;
+  }
+
+  /* Main content */
+  .main { margin-right: 260px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+  .topbar {
+    background: white; border-bottom: 1px solid var(--border); padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .topbar-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 1px; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .date-badge {
+    background: var(--primary-light); color: var(--primary); font-size: 13px; font-weight: 600;
+    padding: 6px 14px; border-radius: 20px;
+  }
+
+  .content { padding: 28px; flex: 1; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
+    border: none; border-radius: var(--radius-sm); font-family: 'Heebo', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover { background: #15803d; }
+  .btn-outline { background: white; color: var(--text-primary); border: 1px solid var(--border); }
+  .btn-outline:hover { background: var(--content-bg); }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-sm { padding: 6px 12px; font-size: 13px; }
+  .btn-icon { padding: 8px; aspect-ratio: 1; }
+
+  /* Cards */
+  .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .card-header { padding: 18px 22px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+  .card-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .card-body { padding: 18px 22px; }
+
+  /* Stats row */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--card-bg); border-radius: var(--radius); padding: 20px 22px;
+    box-shadow: var(--shadow); border: 1px solid var(--border); position: relative; overflow: hidden;
+  }
+  .stat-card::before {
+    content: ''; position: absolute; top: 0; right: 0; width: 4px; height: 100%; border-radius: 0 var(--radius) var(--radius) 0;
+  }
+  .stat-card.blue::before { background: var(--primary); }
+  .stat-card.green::before { background: var(--success); }
+  .stat-card.orange::before { background: var(--warning); }
+  .stat-card.red::before { background: var(--danger); }
+  .stat-card.purple::before { background: #7c3aed; }
+  .stat-icon {
+    width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; margin-bottom: 14px;
+  }
+  .stat-icon.blue { background: var(--primary-light); color: var(--primary); }
+  .stat-icon.green { background: var(--success-light); color: var(--success); }
+  .stat-icon.orange { background: var(--warning-light); color: var(--warning); }
+  .stat-icon.red { background: var(--danger-light); color: var(--danger); }
+  .stat-icon.purple { background: #ede9fe; color: #7c3aed; }
+  .stat-value { font-size: 26px; font-weight: 800; color: var(--text-primary); line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: 500; }
+  .stat-change { font-size: 11px; margin-top: 6px; font-weight: 600; }
+  .stat-change.up { color: var(--success); }
+  .stat-change.down { color: var(--danger); }
+
+  /* Filter bar */
+  .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--border); background: white; color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
+    font-family: 'Heebo', sans-serif;
+  }
+  .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .filter-btn.active { background: var(--primary); border-color: var(--primary); color: white; }
+
+  /* Status badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .badge-success { background: var(--success-light); color: var(--success); }
+  .badge-success::before { background: var(--success); }
+  .badge-warning { background: var(--warning-light); color: var(--warning); }
+  .badge-warning::before { background: var(--warning); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-orange::before { background: var(--orange); }
+  .badge-danger { background: var(--danger-light); color: var(--danger); }
+  .badge-danger::before { background: var(--danger); }
+  .badge-info { background: var(--primary-light); color: var(--primary); }
+  .badge-info::before { background: var(--primary); }
+  .badge-gray { background: #f1f5f9; color: #64748b; }
+  .badge-gray::before { background: #94a3b8; }
+  .badge-purple { background: #ede9fe; color: #7c3aed; }
+  .badge-purple::before { background: #7c3aed; }
+
+  /* Project cards grid */
+  .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+  .project-card {
+    background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border);
+    box-shadow: var(--shadow); overflow: hidden; transition: all 0.2s; cursor: default;
+  }
+  .project-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .project-card-top { padding: 16px 18px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+  .project-name { font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+  .project-client { font-size: 13px; color: var(--text-secondary); margin-top: 3px; display: flex; align-items: center; gap: 5px; }
+  .project-card-body { padding: 12px 18px; }
+  .project-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .project-date { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+  .project-amounts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .amount-box { background: var(--content-bg); border-radius: 8px; padding: 8px 10px; }
+  .amount-label { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .amount-value { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 2px; }
+  .amount-value.profit { color: var(--success); }
+  .profit-bar-wrap { margin-top: 10px; }
+  .profit-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+  .profit-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .profit-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: #f8fafc; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--text-secondary); padding: 10px 14px;
+    border-bottom: 2px solid var(--border); white-space: nowrap; text-align: right;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f8fafc; }
+  tbody td { padding: 11px 14px; color: var(--text-primary); vertical-align: middle; }
+
+  /* Forms */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full-width { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+  input, select, textarea {
+    padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    font-family: 'Heebo', sans-serif; font-size: 14px; color: var(--text-primary); background: white;
+    transition: border-color 0.2s, box-shadow 0.2s; outline: none; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  input::placeholder, textarea::placeholder { color: var(--text-muted); }
+
+  /* Quote builder */
+  .quote-items-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .quote-items-table th {
+    background: #f8fafc; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--text-secondary); padding: 10px 10px;
+    border-bottom: 2px solid var(--border); text-align: right;
+  }
+  .quote-items-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .quote-items-table tr:last-child td { border-bottom: none; }
+  .quote-items-table input, .quote-items-table select {
+    padding: 6px 10px; font-size: 13px; border-radius: 6px;
+  }
+  .quote-totals { background: #f8fafc; border-radius: var(--radius-sm); padding: 16px 20px; }
+  .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: var(--text-secondary); }
+  .total-row.main { font-size: 16px; font-weight: 700; color: var(--text-primary); border-top: 2px solid var(--border); padding-top: 10px; margin-top: 6px; }
+  .total-row.profit-row { color: var(--success); font-weight: 700; }
+
+  /* Paint tracking table */
+  .search-wrap { position: relative; }
+  .search-wrap input { padding-right: 36px; }
+  .search-wrap .search-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+
+  /* Catalog modal search */
+  .catalog-search-container { position: relative; }
+  .catalog-dropdown {
+    position: absolute; top: 100%; right: 0; left: 0; z-index: 200;
+    background: white; border: 1px solid var(--border); border-top: none;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm); box-shadow: var(--shadow-lg);
+    max-height: 240px; overflow-y: auto; display: none;
+  }
+  .catalog-dropdown.open { display: block; }
+  .catalog-item {
+    padding: 9px 14px; cursor: pointer; transition: background 0.15s;
+    border-bottom: 1px solid #f1f5f9; font-size: 13px;
+  }
+  .catalog-item:hover { background: var(--primary-light); }
+  .catalog-item:last-child { border-bottom: none; }
+  .catalog-item .item-name { font-weight: 600; color: var(--text-primary); }
+  .catalog-item .item-meta { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+  .catalog-item .item-price { font-weight: 700; color: var(--primary); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    display: none; backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: var(--radius); box-shadow: var(--shadow-lg);
+    width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto;
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-size: 17px; font-weight: 700; }
+  .modal-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: var(--content-bg); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-secondary); }
+  .modal-close:hover { background: var(--danger-light); color: var(--danger); }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* Stock modal */
+  .stock-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .stock-table th { background:var(--content-bg); padding:8px 10px; text-align:right; font-weight:600; border-bottom:2px solid var(--border); }
+  .stock-table td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  .stock-table tr:last-child td { border-bottom:none; }
+  .stock-select { font-size:12px; padding:4px 8px; border:1px solid var(--border); border-radius:6px; background:white; cursor:pointer; }
+  .stock-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+  .stock-badge.in  { background:#dcfce7; color:#16a34a; }
+  .stock-badge.out { background:#fef9c3; color:#b45309; }
+  .stock-badge.sent { background:#dbeafe; color:#1d4ed8; }
+  .stock-badge.recv { background:#f3e8ff; color:#7e22ce; }
+  .quote-status-row { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid var(--border); margin-bottom:14px; }
+  .quote-status-label { font-size:13px; font-weight:600; }
+  .qs-badge { padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+  .qs-badge.pending { background:#fef9c3; color:#b45309; }
+  .qs-badge.approved { background:#dcfce7; color:#16a34a; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 24px; z-index: 9999;
+    background: var(--text-primary); color: white; padding: 12px 20px;
+    border-radius: var(--radius-sm); font-size: 14px; font-weight: 500;
+    box-shadow: var(--shadow-lg); transform: translateY(100px); opacity: 0;
+    transition: all 0.3s ease; display: flex; align-items: center; gap: 10px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: var(--success); }
+  .toast.error { background: var(--danger); }
+
+  /* Charts */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+  .chart-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); padding: 20px; }
+  .chart-card canvas { max-height: 240px; }
+
+  /* Section header */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .section-title { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+  .section-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* Print styles */
+  @media print {
+    .sidebar, .topbar, .filter-bar, .btn, #printQuote { display: none !important; }
+    .main { margin-right: 0 !important; }
+    .content { padding: 0 !important; }
+    .page { display: block !important; }
+    .page:not(.print-page) { display: none !important; }
+    .card { box-shadow: none !important; }
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-right: 0; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  .profit-excellent { color: var(--success); }
+  .profit-good { color: #0891b2; }
+  .profit-ok { color: var(--warning); }
+  .profit-bad { color: var(--danger); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+
+  .remove-row-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 14px; }
+  .remove-row-btn:hover { color: var(--danger); background: var(--danger-light); }
+
+  .quote-print-header { display: none; }
+  @media print {
+    .quote-print-header { display: block; text-align: center; margin-bottom: 24px; }
+    .quote-print-header h2 { font-size: 22px; }
+    .quote-print-header p { font-size: 14px; color: #666; }
+  }
+
+  /* Category chips */
+  .category-chip {
+    display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    background: var(--primary-light); color: var(--primary);
+  }
+
+  /* Tag colors by group */
+  .tag-raw { background: #e0f2fe; color: #0369a1; }
+  .tag-hardware { background: #ede9fe; color: #7c3aed; }
+  .tag-front { background: #fce7f3; color: #be185d; }
+  .tag-paint { background: #dcfce7; color: #15803d; }
+  .tag-work { background: #fff7ed; color: #c2410c; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><i class="fas fa-tools"></i></div>
+    <h1>ניהול נגרייה</h1>
+    <p>מערכת ניהול מקצועית</p>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-title">ראשי</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <i class="fas fa-th-large"></i> דשבורד
+    </div>
+    <div class="nav-item" onclick="showPage('projects')">
+      <i class="fas fa-folder-open"></i> פרויקטים
+      <span class="nav-badge" id="projectsCount">0</span>
+    </div>
+    <div class="nav-section-title">כלים</div>
+    <div class="nav-item" onclick="showPage('quote')">
+      <i class="fas fa-file-invoice-dollar"></i> הצעת מחיר
+    </div>
+    <div class="nav-item" onclick="showPage('catalog')">
+      <i class="fas fa-tags"></i> מחירון מאוחד
+    </div>
+    <div class="nav-section-title">מעקב</div>
+    <div class="nav-item" onclick="showPage('paint')">
+      <i class="fas fa-paint-brush"></i> מעקב צבע
+    </div>
+    <div class="nav-item" onclick="showPage('plates')">
+      <i class="fas fa-layer-group"></i> מעקב פלטות
+    </div>
+    <div class="nav-item" onclick="showPage('po')">
+      <i class="fas fa-shopping-cart"></i> הזמנות רכש
+      <span class="nav-badge" id="poBadge">0</span>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <i class="fas fa-circle" style="color:#22c55e; font-size:8px;"></i>
+    מערכת פעילה
+  </div>
+</nav>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Main -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="pageTitle">דשבורד</div>
+      <div class="topbar-subtitle" id="pageSubtitle">סקירה כללית של הפעילות</div>
+    </div>
+    <div class="topbar-actions">
+      <span class="date-badge"><i class="far fa-calendar-alt"></i> <span id="currentDate"></span></span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="statsGrid"></div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="card-header" style="padding: 0 0 14px;">
+            <div>
+              <div class="card-title">רווח לפי פרויקט (אחרון 10)</div>
+              <div class="card-subtitle">אחוז רווח סופי</div>
+            </div>
+          </div>
+          <canvas id="profitChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="card-header" style="padding: 0 0 14px;">
+            <div>
+              <div class="card-title">פרויקטים לפי סטטוס</div>
+              <div class="card-subtitle">התפלגות כל הפרויקטים</div>
+            </div>
+          </div>
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+      <div class="section-header">
+        <div>
+          <div class="section-title">פרויקטים אחרונים</div>
+          <div class="section-subtitle">10 הפרויקטים האחרונים</div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="showPage('projects')"><i class="fas fa-arrow-left"></i> כל הפרויקטים</button>
+      </div>
+      <div class="projects-grid" id="recentProjectsGrid"></div>
+    </div>
+
+    <!-- PROJECTS PAGE -->
+    <div class="page" id="page-projects">
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterProjects('all', this)">הכל (<span id="count-all">0</span>)</button>
+        <button class="filter-btn" onclick="filterProjects('בוצע', this)">בוצע (<span id="count-done">0</span>)</button>
+        <button class="filter-btn" onclick="filterProjects('בביצוע', this)">בביצוע (<span id="count-inprog">0</span>)</button>
+        <button class="filter-btn" onclick="filterProjects('אושר', this)">אושר (<span id="count-approved">0</span>)</button>
+        <button class="filter-btn" onclick="filterProjects('תומחר', this)">תומחר (<span id="count-priced">0</span>)</button>
+        <button class="filter-btn" onclick="filterProjects('לא אושר', this)">לא אושר (<span id="count-rejected">0</span>)</button>
+        <button class="filter-btn" onclick="filterProjects('מוכן לתחילת עבודה', this)">מוכן (<span id="count-ready">0</span>)</button>
+        <div class="search-wrap" style="margin-right: auto;">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" placeholder="חיפוש לקוח / פרויקט..." oninput="searchProjects(this.value)" style="width:220px;">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openAddProjectModal()"><i class="fas fa-plus"></i> פרויקט חדש</button>
+      </div>
+      <div class="projects-grid" id="projectsGrid"></div>
+    </div>
+
+    <!-- ADD PROJECT MODAL -->
+    <div class="modal-overlay" id="addProjectModal" onclick="if(event.target===this)closeModal('addProjectModal')">
+      <div class="modal" style="max-width:560px;">
+        <div class="modal-header">
+          <h3 class="modal-title"><i class="fas fa-folder-plus" style="color:var(--primary);margin-left:8px;"></i> פרויקט חדש</h3>
+          <button class="modal-close" onclick="closeModal('addProjectModal')">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>שם לקוח *</label>
+              <input type="text" id="npClient" placeholder="ישראל ישראלי">
+            </div>
+            <div class="form-group">
+              <label>שם פרויקט / רהיט *</label>
+              <input type="text" id="npName" placeholder="ארון סלון">
+            </div>
+            <div class="form-group">
+              <label>תאריך</label>
+              <input type="date" id="npDate">
+            </div>
+            <div class="form-group">
+              <label>סטטוס</label>
+              <select id="npStatus">
+                <option value="תומחר">תומחר</option>
+                <option value="אושר">אושר</option>
+                <option value="בביצוע">בביצוע</option>
+                <option value="מוכן לתחילת עבודה">מוכן לתחילת עבודה</option>
+                <option value="בוצע">בוצע</option>
+                <option value="לא אושר">לא אושר</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>מחיר מכירה (ללא מע"מ) ₪</label>
+              <input type="number" id="npPrice" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>עלות חומרים משוערת ₪</label>
+              <input type="number" id="npEstCost" placeholder="0" min="0">
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+              <label>הערות</label>
+              <input type="text" id="npNotes" placeholder="הערות נוספות...">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid var(--border);">
+          <button class="btn btn-outline" onclick="closeModal('addProjectModal')">ביטול</button>
+          <button class="btn btn-primary" onclick="saveNewProject()"><i class="fas fa-save"></i> שמור פרויקט</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STOCK MODAL -->
+    <div class="modal-overlay" id="stockModal" onclick="if(event.target===this)closeModal('stockModal')">
+      <div class="modal" style="max-width:680px;">
+        <div class="modal-header">
+          <h3 class="modal-title" id="stockModalTitle"><i class="fas fa-boxes" style="color:var(--primary);margin-left:8px;"></i> ניהול מלאי ורכש</h3>
+          <button class="modal-close" onclick="closeModal('stockModal')">×</button>
+        </div>
+        <div class="modal-body" id="stockModalBody"></div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" onclick="closeModal('stockModal')">סגור</button>
+          <button class="btn btn-primary" onclick="saveStockModal()"><i class="fas fa-save"></i> שמור</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUOTE PAGE -->
+    <div class="page" id="page-quote">
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title"><i class="fas fa-file-invoice-dollar" style="color:var(--primary);"></i> פרטי הצעת מחיר</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline btn-sm" onclick="clearQuote()"><i class="fas fa-redo"></i> נקה</button>
+            <button class="btn btn-primary btn-sm" id="printQuote" onclick="printQuote()"><i class="fas fa-print"></i> הדפס</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>שם לקוח</label>
+              <input type="text" id="quoteClient" placeholder="ישראל ישראלי">
+            </div>
+            <div class="form-group">
+              <label>שם פרויקט / רהיט</label>
+              <input type="text" id="quoteProject" placeholder="ארון סלון">
+            </div>
+            <div class="form-group">
+              <label>תאריך</label>
+              <input type="date" id="quoteDate">
+            </div>
+            <div class="form-group">
+              <label>אחוז רווח (בצ"מ)</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <select id="quoteProfitPct" onchange="onProfitPctChange()">
+                  <option value="0">ללא רווח (0%)</option>
+                  <option value="20" selected>פרטי (20%)</option>
+                  <option value="30">קיבוץ פרטי (30%)</option>
+                  <option value="40">מוסדי (40%)</option>
+                  <option value="50">חוץ (50%)</option>
+                  <option value="60">דרור התחלתי (60%)</option>
+                  <option value="custom">אחר (הזן ידנית)</option>
+                </select>
+                <input type="number" id="quoteProfitCustom" placeholder="%" min="0" max="200"
+                  style="display:none;width:80px;" oninput="calcQuoteTotals()">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-header">
+          <div class="card-title">פריטים</div>
+          <button class="btn btn-primary btn-sm" onclick="addQuoteRow()"><i class="fas fa-plus"></i> הוסף פריט</button>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          <div class="table-wrap">
+            <table class="quote-items-table" id="quoteItemsTable">
+              <thead>
+                <tr>
+                  <th style="width:50px;">מספר</th>
+                  <th style="min-width:180px;">חיפוש/בחירת פריט</th>
+                  <th style="width:90px;">קבוצה</th>
+                  <th style="min-width:130px;">שם פריט</th>
+                  <th style="width:80px;">יחידה</th>
+                  <th style="width:100px;">מחיר ליח'</th>
+                  <th style="width:80px;">כמות</th>
+                  <th style="width:100px;">סה"כ שורה</th>
+                  <th style="width:40px;"></th>
+                </tr>
+              </thead>
+              <tbody id="quoteItemsBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">הערות</div></div>
+          <div class="card-body">
+            <textarea id="quoteNotes" rows="4" placeholder="הערות נוספות להצעה..."></textarea>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">סיכום כספי</div></div>
+          <div class="card-body">
+            <div class="quote-totals">
+              <div class="total-row"><span>סכום ביניים</span><span id="totalSubtotal">₪0</span></div>
+              <div class="total-row"><span>מע"מ (18%)</span><span id="totalVat">₪0</span></div>
+              <div class="total-row main"><span>סה"כ + מע"מ</span><span id="totalWithVat">₪0</span></div>
+              <div class="total-row profit-row" id="profitRowContainer" style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--border);">
+                <span>רווח (<span id="profitPctLabel">20</span>%)</span>
+                <span id="totalProfit">₪0</span>
+              </div>
+              <div class="total-row" style="color:var(--success); font-size:13px;">
+                <span>סה"כ להצעה</span><span id="totalFinal">₪0</span>
+              </div>
+            </div>
+            <button class="btn btn-success" style="width:100%;margin-top:14px;" onclick="saveQuoteAsProject()">
+              <i class="fas fa-folder-plus"></i> שמור ופתח כפרויקט
+            </button>
+            <button class="btn btn-outline btn-sm" style="width:100%;margin-top:8px;" onclick="saveQuoteOnly()">
+              <i class="fas fa-save"></i> שמור הצעה בלבד
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATALOG PAGE -->
+    <div class="page" id="page-catalog">
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterCatalog('all', this)">הכל</button>
+        <button class="filter-btn" onclick="filterCatalog('חומר גלם', this)">חומר גלם</button>
+        <button class="filter-btn" onclick="filterCatalog('פרזול', this)">פרזול</button>
+        <button class="filter-btn" onclick="filterCatalog('חזיתות', this)">חזיתות</button>
+        <button class="filter-btn" onclick="filterCatalog('צבע', this)">צבע</button>
+        <div class="search-wrap" style="margin-right:auto;">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" placeholder="חיפוש בפריטים..." oninput="searchCatalog(this.value)" style="width:240px;">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openAddCatalogModal()"><i class="fas fa-plus"></i> הוסף פריט</button>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrap">
+            <table id="catalogTable">
+              <thead>
+                <tr>
+                  <th>מספר</th>
+                  <th>קבוצה</th>
+                  <th>תת קבוצה</th>
+                  <th>חומר / שם</th>
+                  <th>עובי / יחידה</th>
+                  <th>מחיר ללא מע"מ</th>
+                  <th>ספק</th>
+                  <th>הערות</th>
+                  <th style="width:40px;"></th>
+                </tr>
+              </thead>
+              <tbody id="catalogBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAINT PAGE -->
+    <div class="page" id="page-paint">
+      <div style="display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+        <button class="filter-btn active" onclick="filterPaint('all', this)" id="paintFilterAll">הכל</button>
+        <button class="filter-btn" onclick="filterPaint('כן', this)">שולם</button>
+        <button class="filter-btn" onclick="filterPaint('לא', this)">לא שולם</button>
+        <div class="search-wrap" style="margin-right:auto;">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" placeholder="חיפוש..." oninput="searchPaint(this.value)" style="width:200px;">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openAddPaintModal()"><i class="fas fa-plus"></i> הוסף</button>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>שם לקוח</th>
+                  <th>תיאור רהיט</th>
+                  <th>תאריך</th>
+                  <th>צבע</th>
+                  <th>סוג צבע</th>
+                  <th>מחיר (₪)</th>
+                  <th>שולם?</th>
+                  <th>הערות</th>
+                </tr>
+              </thead>
+              <tbody id="paintBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLATES PAGE -->
+    <div class="page" id="page-plates">
+      <div class="stats-grid" id="platesStats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">מלמין ג'ומר</div><span class="badge badge-info">מחירים לאורך זמן</span></div>
+          <div class="card-body" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>תאריך</th><th>מחיר/יח'</th><th>כמות</th><th>סה"כ</th><th>ספק</th></tr></thead><tbody id="platesBodyMelamin"></tbody></table></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">MDF ירוק</div><span class="badge badge-success">מחירים לאורך זמן</span></div>
+          <div class="card-body" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>תאריך</th><th>מחיר/יח'</th><th>כמות</th><th>סה"כ</th><th>ספק</th></tr></thead><tbody id="platesBodyMdf"></tbody></table></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">סנדביץ' מטבחים</div><span class="badge badge-orange">מחירים לאורך זמן</span></div>
+          <div class="card-body" style="padding:0;"><div class="table-wrap"><table><thead><tr><th>תאריך</th><th>מחיר/יח'</th><th>כמות</th><th>סה"כ</th><th>ספק</th></tr></thead><tbody id="platesBodySandwich"></tbody></table></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PO PAGE -->
+    <div class="page" id="page-po">
+      <div style="display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap;">
+        <button class="filter-btn active" onclick="filterPO('all', this)">הכל</button>
+        <button class="filter-btn" onclick="filterPO('ממתין', this)">ממתין</button>
+        <button class="filter-btn" onclick="filterPO('התקבל', this)">התקבל</button>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>פרויקט</th>
+                  <th>לקוח</th>
+                  <th>פריט</th>
+                  <th style="width:70px;text-align:center;">כמות</th>
+                  <th style="width:160px;">סטטוס</th>
+                </tr>
+              </thead>
+              <tbody id="poBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- Add Catalog Item Modal -->
+<div class="modal-overlay" id="addCatalogModal" onclick="if(event.target===this)closeModal('addCatalogModal')">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fas fa-plus" style="color:var(--primary);margin-left:8px;"></i> הוסף פריט למחירון</h3>
+      <button class="modal-close" onclick="closeModal('addCatalogModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>קבוצה</label>
+          <select id="newItemGroup">
+            <option value="חומר גלם">חומר גלם</option>
+            <option value="פרזול">פרזול</option>
+            <option value="חזיתות">חזיתות</option>
+            <option value="צבע">צבע</option>
+            <option value="שעות עבודה">שעות עבודה</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>תת קבוצה</label>
+          <input type="text" id="newItemSubGroup" placeholder="תת קבוצה...">
+        </div>
+        <div class="form-group">
+          <label>שם פריט *</label>
+          <input type="text" id="newItemName" placeholder="שם הפריט">
+        </div>
+        <div class="form-group">
+          <label>יחידה / עובי</label>
+          <input type="text" id="newItemUnit" placeholder="מ'ר, יח', מ'ל...">
+        </div>
+        <div class="form-group">
+          <label>מחיר ללא מע"מ (₪)</label>
+          <input type="number" id="newItemPrice" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>ספק</label>
+          <input type="text" id="newItemSupplier" placeholder="שם הספק...">
+        </div>
+        <div class="form-group">
+          <label>הערות</label>
+          <input type="text" id="newItemNotes" placeholder="הערות...">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid var(--border);">
+      <button class="btn btn-outline" onclick="closeModal('addCatalogModal')">ביטול</button>
+      <button class="btn btn-primary" onclick="saveCatalogItem()"><i class="fas fa-save"></i> הוסף</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Catalog Price Modal -->
+<div class="modal-overlay" id="editCatalogPriceModal" onclick="if(event.target===this)closeModal('editCatalogPriceModal')">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="editCatalogPriceTitle"><i class="fas fa-pencil-alt" style="color:var(--primary);margin-left:8px;"></i> עריכת מחיר</h3>
+      <button class="modal-close" onclick="closeModal('editCatalogPriceModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>מחיר ללא מע"מ (₪)</label>
+          <input type="number" id="editCatalogPriceInput" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>ספק</label>
+          <input type="text" id="editCatalogSupplierInput" placeholder="שם הספק...">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;padding:16px 24px;border-top:1px solid var(--border);">
+      <button class="btn btn-outline" onclick="closeModal('editCatalogPriceModal')">ביטול</button>
+      <button class="btn btn-primary" onclick="saveCatalogPrice()"><i class="fas fa-save"></i> שמור</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Paint Modal -->
+<div class="modal-overlay" id="addPaintModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-paint-brush" style="color:var(--primary);"></i> הוסף רשומת צבע</div>
+      <button class="modal-close" onclick="closeModal('addPaintModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>שם לקוח</label><input type="text" id="paintClientInput" placeholder="שם הלקוח"></div>
+        <div class="form-group"><label>תיאור רהיט</label><input type="text" id="paintItemInput" placeholder="ארונית / מדף..."></div>
+        <div class="form-group"><label>תאריך שליחה</label><input type="date" id="paintDateInput"></div>
+        <div class="form-group"><label>צבע</label><input type="text" id="paintColorInput" placeholder="לבן מט / אקרילי..."></div>
+        <div class="form-group"><label>סוג צבע</label>
+          <select id="paintTypeInput">
+            <option>לכה</option><option>אטום</option><option>CNC</option><option>פוליאורטני</option>
+          </select>
+        </div>
+        <div class="form-group"><label>מחיר (₪)</label><input type="number" id="paintPriceInput" placeholder="0"></div>
+        <div class="form-group"><label>שולם?</label>
+          <select id="paintPaidInput"><option value="לא">לא</option><option value="כן">כן</option></select>
+        </div>
+        <div class="form-group"><label>הערות</label><input type="text" id="paintNotesInput" placeholder="הערות..."></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('addPaintModal')">ביטול</button>
+      <button class="btn btn-primary" onclick="addPaintRecord()"><i class="fas fa-save"></i> שמור</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA - Extracted from excel_data.json
+// ============================================================
+
+const PROJECTS_DATA = [
+  ["ברוך ואורנה שמיר","אי + ספרייה","10/05/2025","בוצע",16500,10000,6500,10000,6500,"לברר מחיר סופי + תוספת ברזל",39,39],
+  ["יואל קורנבליט","ספריית סלון","10/06/2025","לא אושר",19500,0,0,0,0,"",0,0],
+  ["ישע עקרון","בית עץ","12/06/2025","לא אושר",7000,0,0,0,0,"",0,0],
+  ["שיר בן אבי","ארון 2 דלתות","26/06/2025","בוצע",2500,2000,500,2000,500,"",20,20],
+  ["שיר בן אבי","כוננית למספרה","26/06/2025","בוצע",2500,2000,500,2000,500,"",20,20],
+  ["משרד אינסטלציה","שולחן מנהל","26/06/2025","לא אושר",4500,0,0,0,0,"",0,0],
+  ["מיה צור","הוספת חזית במטבח","30/06/2025","בוצע",300,150,150,150,150,"",50,50],
+  ["עירית ליאור","ארונית קטנה בצבע","30/06/2025","בוצע",950,500,450,500,450,"",47,47],
+  ["זוהר ורז פולק","מטבח","09/07/2025","לא אושר",50000,0,0,0,0,"",0,0],
+  ["רותי קוסטא","מדפים, שולחן מחשב, קופינג ועוד","10/07/2025","בוצע",3500,2000,1500,2200,1300,"",43,37],
+  ["לידיה אייזנברג","ארונית מקלחת עם מראה","14/07/2025","לא אושר",600,400,200,0,0,"",33,0],
+  ["כלבו","כל מיני עבודות קטנות","14/07/2025","בוצע",1300,800,500,1000,300,"",38,23],
+  ["דורין - יוגה","מעמד למזרני יוגה","16/07/2025","לא אושר",650,400,250,0,0,"",38,0],
+  ["גילי אורם","1.3 מטר קופינג","21/07/2025","בוצע",325,150,175,160,165,"",54,51],
+  ["שיר צור","מדפי אלון צפים","22/07/2025","בביצוע",750,500,250,0,0,"",33,0],
+  ["משה וינר","ארון חוץ + תיקון חזיתות מראה","28/07/2025","בוצע",3200,2000,1200,1588,1612,"",38,50],
+  ["ניקה","ארון + שולחן מחשב + 3 מדפים צפים","28/07/2025","לא אושר",8500,5300,3200,0,0,"",38,0],
+  ["יובל פלד","פלטה לשולחן","31/07/2025","בוצע",700,500,200,500,200,"",29,29],
+  ["בקתת הינשוף","מעקות","10/08/2025","בוצע",2000,1700,300,2000,0,"",15,0],
+  ["פלחה","מדף איפאה","10/08/2025","בוצע",800,600,200,600,200,"",25,25],
+  ["אליס שהם","מדף","10/08/2025","בוצע",700,400,300,400,300,"",43,43],
+  ["מועדון לחבר","ארון שירות","10/08/2025","בוצע",3800,2000,1800,2400,1400,"",47,37],
+  ["שיר גורדון","מדף","11/08/2025","בוצע",250,150,100,150,100,"",40,40],
+  ["יוסי סופר","מטבחון","13/08/2025","בוצע",5000,3200,1800,3500,1500,"מגירות אורצ'רד",36,30],
+  ["מוסך","כוננית למשרד","19/08/2025","בוצע",7000,4500,2500,2800,4200,"טריקה שקטה",36,60],
+  ["אילה תלמי","ארונית נעליים","25/08/2025","בוצע",2000,1300,700,1300,700,"",35,35],
+  ["עמרם איילון","מתלה תכשיטים מאלון","27/08/2025","בוצע",500,200,300,300,200,"",60,40],
+  ["מיה צור","הארכות לשולחן","28/08/2025","תומחר",1400,700,700,0,0,"פורניר טיק",50,0],
+  ["שומריה","מטבחון","28/08/2025","בוצע",5700,3700,2000,3718,1982,"",35,35],
+  ["דרור יוספיאן","מטבח","03/09/2025","בוצע",59000,29000,30000,0,0,"",51,0],
+  ["ינאי אלון","חזית מגירה בצבע","08/09/2025","בוצע",600,300,300,400,200,"",50,33],
+  ["רז שלח","ארונות קיר","10/09/2025","בוצע",22800,12500,10300,12710,10090,"2 ארונות",45,44],
+  ["גלעד ארנון","מקרר אינטגרלי","15/09/2025","בוצע",2800,2200,600,2200,600,"",21,21],
+  ["שירה בז","ארון פינתי","16/09/2025","בוצע",5000,3800,1200,3700,1300,"",24,26],
+  ["זיו שמיר","תוספות למטבח","28/09/2025","בוצע",800,500,300,500,300,"",38,38],
+  ["תמה גלעד","בחדר בקרת איכות","15/10/2025","אושר",17700,12000,5700,0,0,"",32,0],
+  ["ויקי","ארוניות","21/10/2025","בוצע",800,400,400,350,450,"",50,56],
+  ["הדר וגולן פלקון","ארון משחקים","26/10/2025","בוצע",4000,3000,1000,3010,990,"",25,25],
+  ["מוסך","מטבחון + קופינג","02/11/2025","בוצע",5500,3700,1800,3600,1900,"",33,35],
+  ["מוסך","ארון למוסך אופניים","03/11/2025","בוצע",6900,5200,1700,4593,2307,"",25,33],
+  ["בית גלעד","ארון תרופות","04/11/2025","לא אושר",3000,2200,800,0,0,"",27,0],
+  ["קומונה","חזיתות בנישה","04/11/2025","בוצע",1500,900,600,800,700,"",40,47],
+  ["דרור יוספיאן","חדר ארונות","12/11/2025","בוצע",34000,23000,11000,0,0,"להוסיף 1500 ל3 מגירות",32,0],
+  ["תמה גלעד","ארונות שירות","13/11/2025","לא אושר",6000,4000,2000,0,0,"",33,0],
+  ["גלי רונן","ארון מחסן","18/11/2025","תומחר",1700,1300,400,0,0,"",24,0],
+  ["דילן קוסטא","ארון הזזה","18/11/2025","בוצע",8000,5000,3000,6350,1650,"",38,21],
+  ["אמיר שפירא","חיפוי קיר","20/11/2025","בוצע",2500,1800,700,1000,1500,"",28,60],
+  ["שירה בז","ארון לחדר שינה","20/11/2025","בוצע",5000,3600,1400,3100,1900,"",28,38],
+  ["אורלי וגיא","דלתות הזזה בנישה","23/11/2025","בוצע",1150,800,350,500,650,"",30,57],
+  ["רחל לין","ארון משרד","26/11/2025","בוצע",1500,1100,400,2120,-620,"תמחור ישן",27,-41],
+  ["דרור ב' טבעון","מטבחון","27/11/2025","בביצוע",42000,20000,22000,0,0,"",52,0],
+  ["יובל פלד","כוננית","01/01/2026","בוצע",1500,1100,400,1300,200,"",27,13],
+  ["ליאת טל","מדפי אלון צפים","07/01/2026","בביצוע",1700,1300,400,0,0,"",24,0],
+  ["בית גלעד","החלפת חזיתות","07/01/2026","בוצע",12000,9000,3000,9000,3000,"",25,25],
+  ["מועדון לחבר","ארון שירות","02/02/2026","בוצע",1100,800,300,800,300,"",27,27],
+  ["מדגרה","מטבח","08/02/2026","בביצוע",25000,18000,7000,0,0,"כולל שייש, קרמיקה וכיור",28,0],
+  ["חן חדשי","ארון קיר ממ\"ד","12/06/2026","בוצע",13500,9400,4100,8100,5400,"",30,40],
+  ["דרור ב' טבעון","טופינג","18/02/2026","בביצוע",1800,800,1000,0,0,"",56,0],
+  ["דין ומור לין","ארון סלון","03/03/2026","בביצוע",10250,8400,1850,0,0,"",18,0]
+];
+
+// מחירון מאוחד - clean numeric prices
+const CATALOG_DATA = [
+  ["1001","חומר גלם","שעות עבודה","פרטי","שעה",76.2,"ללא מע\"מ"],
+  ["1002","חומר גלם","שעות עבודה","מוסדי","שעה",101.6,"ללא מע\"מ"],
+  ["1003","חומר גלם","שעות עבודה","תמה","שעה",114.4,"ללא מע\"מ"],
+  ["1004","חומר גלם","מיוחדים","עבודות מיוחדות","שקל",1,"ללא מע\"מ"],
+  ["1005","חומר גלם","לאמי","אורן","18",213,""],
+  ["1006","חומר גלם","לאמי","אורן","20",265,""],
+  ["1007","חומר גלם","לאמי","אורן","28",350,"ארזי רז"],
+  ["1009","חומר גלם","לאמי","אלון","20",900,"100X300 עלי"],
+  ["1010","חומר גלם","לאמי","אלון","40",1975,"בלורן 100X300"],
+  ["1011","חומר גלם","בוצ'ר","אלון","20",265,""],
+  ["1012","חומר גלם","בוצ'ר","אלון","40",460,""],
+  ["1013","חומר גלם","לאמי","אלון","40",550,"למ\"ר"],
+  ["1014","חומר גלם","לאמי","אלון AB","40",610,""],
+  ["1015","חומר גלם","עצים","אורן מוקצה","5X10",10,""],
+  ["1016","חומר גלם","עצים","אורן סוכות","25X100",5,""],
+  ["1017","חומר גלם","עצים","אורן מוקצה","26X169",9,""],
+  ["1018","חומר גלם","עצים","אורן מוקצה ומחוטא","5X10",11,""],
+  ["1019","חומר גלם","פורמייקה","גב לבן מבריק","",25,""],
+  ["1020","חומר גלם","פורמייקה","ארפה סטנדרט","",156,""],
+  ["1021","חומר גלם","פורמייקה","סוקל נירוסטה","",108,""],
+  ["1022","חומר גלם","פורניר","אלון לבן","122X244",222,""],
+  ["1025","חומר גלם","סנדביץ'","גלוי","8",60,""],
+  ["1027","חומר גלם","סנדביץ'","גלוי","12",80,""],
+  ["1029","חומר גלם","סנדביץ'","גלוי","16",100,""],
+  ["1031","חומר גלם","סנדביץ'","גלוי","20",130,""],
+  ["1032","חומר גלם","MDF","גב/ארפה","19",400,"כולל זמן עבודה בפרס"],
+  ["1034","חומר גלם","MDF","ירוק גלוי","17",84,"מחיר למשטח"],
+  ["1036","חומר גלם","MDF","אלון מבוקע/אלון מבוקע","19",286,""],
+  ["1037","חומר גלם","MDF","אלון מבוקע/אלון מבוקע","28",335,""],
+  ["1038","חומר גלם","סנדביץ'","בלורן למטבחים","16",110,"מחיר למשטח"],
+  ["1039","חומר גלם","סנדביץ'","גב מטבחים בלורן","5",60,""],
+  ["1040","חומר גלם","מזונית","גב רוחב 122","4",35,""],
+  ["1041","חומר גלם","מזונית","גב רוחב 84","4",25,""],
+  ["1042","חומר גלם","מלמין","ג'ומר לבן","16.5",89,"מחיר למשטח"],
+  ["1043","חומר גלם","בירץ'","בירץ' לבנה","10",83,""],
+  ["1044","חומר גלם","בירץ'","בירץ' לבנה","16",134,""],
+  ["1045","חומר גלם","בירץ'","בירץ' לבנה","18",146,""],
+  ["1046","חומר גלם","בירץ'","בירץ' לבנה","20",176,""],
+  ["1047","חומר גלם","OSB","OSB","17",79,""],
+  ["1048","חומר גלם","קאנט","כל קאנט","למטר",3,""],
+  ["1049","חומר גלם","קאנט","קאנט פורניר","למטר",4,""],
+  ["1050","חומר גלם","עצים","נוטפדר 10ס\"מ","למטר",6,"מגיע באורך 4.8 מטר"],
+  ["1051","חומר גלם","עצים","אורן מוקצה ומחוטא","14.2X3.4",13,""],
+  ["1052","חומר גלם","פורמייקה/פורניר","משולש אלון לבן נקי","גיליון",180,"עלי"],
+  ["1053","חומר גלם","MDF","ירוק יצוק","19",130,""],
+  ["1054","חומר גלם","MDF","ירוק יצוק","21",160,""],
+  ["3001","חזיתות","פולימר","אנגלי לייט","מ\"ר",491,"בלורן"],
+  ["3002","צבע","צבע","פוליאורטני","מ\"ר",160,"איברהים זרעיני"],
+  ["3003","צבע","צבע","לכה אקרילי 5%","מ\"ר",180,"איברהים זרעיני"],
+  ["3004","צבע","צבע","שלייפלאק מט","מ\"ר",220,"איברהים זרעיני"],
+  ["3005","צבע","צבע","שלייפלאק מבריק 50%","מ\"ר",440,"איברהים זרעיני"],
+  ["3006","צבע","צבע","שלייפלאק מט עם אינטגרלי/CNC","מ\"ר",240,"איברהים זרעיני"],
+  ["3007","צבע","צבע","שלייפלאק מבריק עם אינטגרלי/CNC","מ\"ר",480,"איברהים זרעיני"],
+  ["3008","חזיתות","עץ מלא","יובל ללא לכה","מ\"ר",948,"בלורן"],
+  ["3009","חזיתות","ראטן + מקל סבא","מקל סבא צבע + ראטן","מ\"ר",2000,"דרור"],
+  ["3010","חזיתות","מקל סבא","מקל סבא צבע 2 צדדים","מ\"ר",1300,"דרור"],
+  ["3011","חזיתות","פולימר","פאפא","מ\"ר",846,"בלורן"],
+  ["3012","חזיתות","פולימר","אקרופוליס חדש","מ\"ר",931,"בלורן"],
+  ["3013","חזיתות","פולימר","שנגרילה חדש","מ\"ר",931,"בלורן"],
+  ["3014","חזיתות","פולימר","אינגלנד","מ\"ר",654,"בלורן"],
+  ["3015","חזיתות","צבע","לכה 0%","מ\"ר",385,"בלורן"],
+  ["3016","חזיתות","ללא צבע","אנגלי לייט","מ\"ר",381,"בלורן"],
+  ["3017","חזיתות","CNC","MDF 19 יצוק","מ\"ר",220,"איברהים זרעיני"],
+  ["3018","חזיתות","ידית","אינטגרלית","לחזית",120,"רוטר"],
+  ["3019","חזיתות","מלמין","MDF מלמין יצוק","פלטה",347,"בלורן"],
+  ["3020","חזיתות","פולימר","טוסקנה","מ\"ר",931,"בלורן"],
+  ["3021","חזיתות","פולימר","מיקונוס","מ\"ר",654,"בלורן"],
+  ["2001","פרזול","מתכלים","דופלו","לאחד",0.04,""],
+  ["2002","פרזול","מתכלים","בורג יורו","לאחד",0.08,""],
+  ["2003","פרזול","מתכלים","דבק לבן","5 ליטר",85,""],
+  ["2004","פרזול","מגירה","מטאבוקס 55 גבוה","למגירה בכל הגדלים",67,"בלום"],
+  ["2005","פרזול","מגירה","מריובוקס נמוך 55","רק פרזול",200,"בלום"],
+  ["2006","פרזול","מגירה","מריובוקס גבוהה 55","רק פרזול",250,"בלום"],
+  ["2007","פרזול","מגירה","מריובוקס גבוהה זכוכית 55","רק פרזול",270,"בלום"],
+  ["2008","פרזול","מגירה","טנדם 55","רק פרזול",100,"בלום"],
+  ["2009","פרזול","צירים","ישר","",11,"בלום"],
+  ["2010","פרזול","צירים","ישר בלומושן","",13.44,"בלום"],
+  ["2011","פרזול","צירים","ישר בלומושן","",13.44,"בלום"],
+  ["2013","פרזול","צירים","תושבת","",3.1,"בלום"],
+  ["2017","פרזול","מתכלים","רגל 10 ס\"מ + תושבת","",2.08,""],
+  ["2018","פרזול","מתכלים","טריקה שקטה לדלת","",40,"בלום"],
+  ["2019","פרזול","פלסטיקים","מגבה פינה","",5,""],
+  ["2020","פרזול","מתכלים","ידית אלומיניום","ליחידה",45,""],
+  ["2021","פרזול","מתכלים","תושבת מדף","",3,""],
+  ["2022","פרזול","מגירה","לגראבוקס 45 ס\"מ","גובה M 40 ק\"ג",239.45,"בלום"],
+  ["2023","פרזול","מגירה","לגראבוקס 45 ס\"מ","גובה M 70 ק\"ג",268.72,"בלום"],
+  ["2024","פרזול","מגירה","לגראבוקס 45 ס\"מ","גובה FREE C 40 ק\"ג",290.05,"בלום"],
+  ["2025","פרזול","מגירה","לגראבוקס 45 ס\"מ","גובה FREE C 70 ק\"ג",306.24,"בלום"]
+];
+
+// Paint tracking data
+const PAINT_DATA_RAW = [
+  ["חדרי במבחים","ידיות כניסה","02/04/2025","0776Aטמבור","אטום",720,"כן",""],
+  ["עדנה חדשי","ספריית עץ","02/04/2025","טבעי","לכה",1800,"כן",""],
+  ["אדם לין","פלטה לשולחן","25/06/2025","אקרילי","לכה",400,"כן",""],
+  ["עירית ליאור","ארונית","03/07/2025","לבן מט","אטום",290,"כן",""],
+  ["אבו מג'ד","פלטה עגולה","03/07/2025","לבן מט","אטום",150,"כן",""],
+  ["רותי קוסטא","פלטה למחשב","22/07/2025","אקרילי 5%","לכה",200,"כן",""],
+  ["ברוך שמיר","לאמי","22/07/2025","אקרילי 5%","לכה",1170,"כן",""],
+  ["ברוך שמיר","מדפים","22/07/2025","טמבור 0021P","אטום",330,"כן",""],
+  ["אליס שהם","מדף","10/08/2025","אקרילי 5%","לכה",60,"כן",""],
+  ["אליס שהם","מדף","22/08/2025","אקרילי 5%","לכה",90,"כן",""],
+  ["ינאי אלון","חזית מגירה","09/09/2025","לבן 5%","אטום",250,"כן",""],
+  ["הדר מזרחי","חזית ארון","09/11/2025","0395T טמבור","אטום",440,"כן","אצל איברהים"],
+  ["הדר שקד","חזית ארון","09/11/2025","לבן 5%","אטום",440,"כן","חזר מצביעה"],
+  ["נגרייה","שולחן רוטר","15/11/2025","CNC","CNC",450,"כן",""],
+  ["דרור יוספאן","חזיתות ארון","21/11/2025","צבע + CNC","CNC",6841,"כן","15 מ\"ר כולל חומר"],
+  ["שירה בז","חזיתות פורניר","27/11/2025","פוליארטני","לכה",1427,"כן",""],
+  ["יובל פלד","ספריית אלון","15/01/2026","פוליארטני","לכה",500,"לא",""],
+  ["הדר שקד","כוננית אלון","15/01/2026","אקרילי טבעי 0%","לכה",400,"לא",""],
+  ["חן חדשי","בוצ'ר","23/02/2026","אקרילי 5%","לכה",0,"לא","כולל ליטוש"],
+  ["נועם סלע","חזיתות מגירה","11/03/2026","שחור","אטום",400,"לא","כולל ליטוש"]
+];
+
+// Plates data (price history)
+const PLATES_MELAMIN = [
+  ["16/01/2025",125,50,6250,"בירמן"],
+  ["19/02/2025",125,50,6250,"בירמן"],
+  ["09/04/2025",120,50,6000,"בירמן"],
+  ["11/08/2025",116,50,5875,"בירמן"],
+  ["21/10/2025",115,50,5750,"ארזי רז"],
+  ["21/01/2026",89,50,4450,"בירמן"],
+  ["26/02/2026",89,50,4450,"בירמן"]
+];
+const PLATES_MDF = [
+  ["05/01/2025",89,54,4806,"אברבוך"],
+  ["16/02/2025",91,54,4887,"אברבוך"],
+  ["15/07/2025",91,54,4887,"אברבוך"],
+  ["22/12/2025",84,54,4536,"ארזי רז"],
+  ["17/02/2026",84,54,4536,"בירמן"]
+];
+const PLATES_SANDWICH = [
+  ["01/01/2025",127,50,6350,"בלורן"],
+  ["07/04/2025",127,53,6732,"בלורן"],
+  ["03/08/2025",127,53,6732,"בלורן"],
+  ["18/11/2025",127,57,6732,"בלורן"],
+  ["27/01/2026",110,53,5830,"בלורן"]
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let currentPage = 'dashboard';
+let projectsFilter = 'all';
+let projectsSearch = '';
+let catalogFilter = 'all';
+let catalogSearch = '';
+let paintFilter = 'all';
+let paintSearch = '';
+let quoteRowCount = 0;
+
+// Load from localStorage
+let paintData = JSON.parse(localStorage.getItem('paintData') || 'null') || [...PAINT_DATA_RAW];
+let savedQuotes = JSON.parse(localStorage.getItem('savedQuotes') || '[]');
+let projectQuotes = JSON.parse(localStorage.getItem('projectQuotes') || '{}');
+let projectStock  = JSON.parse(localStorage.getItem('projectStock')  || '{}');
+let poStatuses    = JSON.parse(localStorage.getItem('poStatuses')    || '{}');
+let poFilter = 'all';
+const newProjects = JSON.parse(localStorage.getItem('newProjects') || '[]');
+newProjects.forEach(p => PROJECTS_DATA.push(p));
+
+// ============================================================
+// UTILS
+// ============================================================
+function formatILS(n) {
+  if (!n && n !== 0) return '₪0';
+  return '₪' + Math.round(n).toLocaleString('he-IL');
+}
+function parseILS(str) {
+  if (typeof str === 'number') return str;
+  if (!str || str === '  ') return 0;
+  return parseFloat(String(str).replace(/[₪,\s]/g, '')) || 0;
+}
+function statusBadge(status) {
+  const s = (status || '').trim();
+  const map = {
+    'בוצע': ['badge-success','בוצע'],
+    'לא אושר': ['badge-danger','לא אושר'],
+    'בביצוע': ['badge-info','בביצוע'],
+    'אושר': ['badge-purple','אושר'],
+    'תומחר': ['badge-warning','תומחר'],
+    'לא בוצע': ['badge-warning','לא בוצע'],
+    'בהמתנה': ['badge-orange','בהמתנה'],
+    'מוכן לתחילת עבודה': ['badge-success','✓ מוכן']
+  };
+  const [cls, label] = map[s] || ['badge-gray', s || 'לא ידוע'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+function profitColor(pct) {
+  if (pct >= 45) return '#16a34a';
+  if (pct >= 30) return '#0891b2';
+  if (pct >= 20) return '#d97706';
+  return '#dc2626';
+}
+function profitClass(pct) {
+  if (pct >= 45) return 'profit-excellent';
+  if (pct >= 30) return 'profit-good';
+  if (pct >= 20) return 'profit-ok';
+  return 'profit-bad';
+}
+function groupTag(group) {
+  const map = {'חומר גלם':'tag-raw','פרזול':'tag-hardware','חזיתות':'tag-front','צבע':'tag-paint','שעות עבודה':'tag-work'};
+  return `<span class="category-chip ${map[group]||''}">${group}</span>`;
+}
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+const PAGE_META = {
+  dashboard: ['דשבורד', 'סקירה כללית של הפעילות'],
+  projects: ['פרויקטים', 'כל הפרויקטים והסטטוסים'],
+  quote: ['הצעת מחיר', 'בניית הצעת מחיר חדשה'],
+  catalog: ['מחירון מאוחד', 'כל הפריטים והמחירים'],
+  paint: ['מעקב צבע', 'מעקב אחר עבודות צביעה'],
+  plates: ['מעקב פלטות', 'היסטוריית מחירי פלטות'],
+  po: ['הזמנות רכש', 'מעקב אחר כל הזמנות הרכש'],
+};
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.trim().includes(PAGE_META[name]?.[0]?.substring(0,4))) n.classList.add('active');
+  });
+  // Fix nav active by onclick
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') === `showPage('${name}')`) n.classList.add('active');
+    else n.classList.remove('active');
+  });
+  currentPage = name;
+  document.getElementById('pageTitle').textContent = PAGE_META[name]?.[0] || name;
+  document.getElementById('pageSubtitle').textContent = PAGE_META[name]?.[1] || '';
+  renderPage(name);
+}
+
+function renderPage(name) {
+  if (name === 'dashboard') renderDashboard();
+  else if (name === 'projects') renderProjects();
+  else if (name === 'quote') renderQuotePage();
+  else if (name === 'catalog') renderCatalog();
+  else if (name === 'paint') renderPaint();
+  else if (name === 'plates') renderPlates();
+  else if (name === 'po') renderPOPage();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const allProj = PROJECTS_DATA;
+  const done = allProj.filter(p => p[3] === 'בוצע');
+  const inProg = allProj.filter(p => p[3] === 'בביצוע');
+  const pending = allProj.filter(p => p[3] === 'אושר');
+  const totalRevenue = done.reduce((s, p) => s + (p[4] || 0), 0);
+  const totalFinalCost = done.reduce((s, p) => s + (p[7] || 0), 0);
+  const totalFinalProfit = done.filter(p => p[8] > 0).reduce((s, p) => s + (p[8] || 0), 0);
+  const avgProfit = done.filter(p => p[11] > 0).reduce((s, p, _, arr) => s + p[11] / arr.length, 0);
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card blue">
+      <div class="stat-icon blue"><i class="fas fa-folder"></i></div>
+      <div class="stat-value">${allProj.length}</div>
+      <div class="stat-label">סה"כ פרויקטים</div>
+      <div class="stat-change up"><i class="fas fa-chart-line"></i> ${done.length} הושלמו</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon green"><i class="fas fa-shekel-sign"></i></div>
+      <div class="stat-value">${formatILS(totalRevenue)}</div>
+      <div class="stat-label">הכנסות מפרויקטים שבוצעו</div>
+      <div class="stat-change up">כולל מע"מ</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-icon orange"><i class="fas fa-percentage"></i></div>
+      <div class="stat-value">${Math.round(avgProfit)}%</div>
+      <div class="stat-label">ממוצע רווח סופי</div>
+      <div class="stat-change up">מפרויקטים עם רווח</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-icon purple"><i class="fas fa-spinner"></i></div>
+      <div class="stat-value">${inProg.length}</div>
+      <div class="stat-label">פרויקטים בביצוע</div>
+      <div class="stat-change">${pending.length} ממתינים לביצוע</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon green"><i class="fas fa-wallet"></i></div>
+      <div class="stat-value">${formatILS(totalFinalProfit)}</div>
+      <div class="stat-label">רווח כולל שנגבה</div>
+      <div class="stat-change up">לא כולל עלויות קבועות</div>
+    </div>
+  `;
+
+  // Recent 10 projects
+  const recent = [...allProj].reverse().slice(0, 10);
+  document.getElementById('recentProjectsGrid').innerHTML = recent.map(p => projectCard(p)).join('');
+
+  // Charts
+  renderCharts(allProj);
+  updateProjectCounts(allProj);
+}
+
+function renderCharts(projects) {
+  // Profit chart - last 10 done with positive profit%
+  const withProfit = projects.filter(p => p[3] === 'בוצע' && p[11] > 0).slice(-10);
+  const profitCtx = document.getElementById('profitChart');
+  if (window._profitChart) window._profitChart.destroy();
+  window._profitChart = new Chart(profitCtx, {
+    type: 'bar',
+    data: {
+      labels: withProfit.map(p => p[1].length > 12 ? p[1].substring(0,12)+'…' : p[1]),
+      datasets: [{
+        label: 'אחוז רווח סופי',
+        data: withProfit.map(p => p[11]),
+        backgroundColor: withProfit.map(p => profitColor(p[11]) + '99'),
+        borderColor: withProfit.map(p => profitColor(p[11])),
+        borderWidth: 2,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw}%` } } },
+      scales: {
+        y: { beginAtZero: true, ticks: { callback: v => v + '%' }, grid: { color: '#f1f5f9' } },
+        x: { ticks: { font: { family: 'Heebo' } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Status donut
+  const statusCounts = {
+    'בוצע': projects.filter(p => p[3]==='בוצע').length,
+    'בביצוע': projects.filter(p => p[3]==='בביצוע').length,
+    'אושר': projects.filter(p => p[3]==='אושר').length,
+    'תומחר': projects.filter(p => p[3]==='תומחר').length,
+    'לא אושר': projects.filter(p => p[3]==='לא אושר').length,
+  };
+  const statusCtx = document.getElementById('statusChart');
+  if (window._statusChart) window._statusChart.destroy();
+  window._statusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(statusCounts),
+      datasets: [{
+        data: Object.values(statusCounts),
+        backgroundColor: ['#16a34a','#2563eb','#7c3aed','#d97706','#dc2626'],
+        borderWidth: 3, borderColor: 'white',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { family: 'Heebo', size: 12 }, padding: 12 } } }
+    }
+  });
+}
+
+// ============================================================
+// PROJECTS
+// ============================================================
+function updateProjectCounts(projects) {
+  const all = projects || PROJECTS_DATA;
+  document.getElementById('count-all').textContent = all.length;
+  document.getElementById('count-done').textContent = all.filter(p=>p[3]==='בוצע').length;
+  document.getElementById('count-inprog').textContent = all.filter(p=>p[3]==='בביצוע').length;
+  document.getElementById('count-approved').textContent = all.filter(p=>p[3]==='אושר').length;
+  document.getElementById('count-priced').textContent = all.filter(p=>p[3]==='תומחר').length;
+  document.getElementById('count-rejected').textContent = all.filter(p=>p[3]==='לא אושר').length;
+  document.getElementById('count-ready').textContent = all.filter(p=>p[3]==='מוכן לתחילת עבודה').length;
+  document.getElementById('projectsCount').textContent = all.length;
+}
+
+function renderProjects() {
+  updateProjectCounts(PROJECTS_DATA);
+  filterProjects(projectsFilter, null);
+}
+
+function filterProjects(status, btn) {
+  projectsFilter = status;
+  document.querySelectorAll('#page-projects .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderProjectsGrid();
+}
+
+function searchProjects(q) {
+  projectsSearch = q.toLowerCase();
+  renderProjectsGrid();
+}
+
+function openAddProjectModal() {
+  document.getElementById('npDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('npClient').value = '';
+  document.getElementById('npName').value = '';
+  document.getElementById('npPrice').value = '';
+  document.getElementById('npEstCost').value = '';
+  document.getElementById('npNotes').value = '';
+  document.getElementById('npStatus').value = 'תומחר';
+  document.getElementById('addProjectModal').classList.add('open');
+}
+
+function saveNewProject() {
+  const client = document.getElementById('npClient').value.trim();
+  const name = document.getElementById('npName').value.trim();
+  if (!client || !name) { showToast('יש למלא שם לקוח ושם פרויקט', 'error'); return; }
+  const date = document.getElementById('npDate').value
+    ? new Date(document.getElementById('npDate').value).toLocaleDateString('he-IL')
+    : new Date().toLocaleDateString('he-IL');
+  const status = document.getElementById('npStatus').value;
+  const price = parseFloat(document.getElementById('npPrice').value) || 0;
+  const estCost = parseFloat(document.getElementById('npEstCost').value) || 0;
+  const estProfit = price - estCost;
+  const estPct = price > 0 ? Math.round((estProfit / price) * 100) : 0;
+  const notes = document.getElementById('npNotes').value.trim();
+  const newP = [client, name, date, status, price, estCost, estProfit, 0, 0, notes, estPct, 0];
+  PROJECTS_DATA.push(newP);
+  const saved = JSON.parse(localStorage.getItem('newProjects') || '[]');
+  saved.push(newP);
+  localStorage.setItem('newProjects', JSON.stringify(saved));
+  closeModal('addProjectModal');
+  updateProjectCounts(PROJECTS_DATA);
+  renderProjectsGrid();
+  renderDashboard();
+  showToast('הפרויקט נוסף בהצלחה!', 'success');
+}
+
+function renderProjectsGrid() {
+  let data = PROJECTS_DATA;
+  if (projectsFilter !== 'all') data = data.filter(p => p[3] === projectsFilter);
+  if (projectsSearch) data = data.filter(p =>
+    p[0].toLowerCase().includes(projectsSearch) || p[1].toLowerCase().includes(projectsSearch)
+  );
+  const grid = document.getElementById('projectsGrid');
+  if (data.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-search"></i><h3>לא נמצאו פרויקטים</h3><p>נסה לשנות את הסינון</p></div>`;
+    return;
+  }
+  grid.innerHTML = [...data].reverse().map(p => projectCard(p)).join('');
+}
+
+function projectCard(p) {
+  const [client, name, date, status, price, estCost, estProfit, finalCost, finalProfit, notes, estPct, finalPct] = p;
+  const displayPct = finalPct > 0 ? finalPct : estPct;
+  const barColor = profitColor(displayPct);
+  const barWidth = Math.min(Math.max(displayPct, 0), 100);
+  const hasFinal = finalCost > 0;
+  return `
+  <div class="project-card">
+    <div class="project-card-top">
+      <div>
+        <div class="project-name">${name}</div>
+        <div class="project-client"><i class="fas fa-user" style="font-size:10px;color:var(--text-muted);"></i> ${client}</div>
+      </div>
+      ${statusBadge(status)}
+    </div>
+    <div class="project-card-body">
+      <div class="project-meta">
+        <span class="project-date"><i class="far fa-calendar-alt"></i> ${date}</span>
+        ${notes ? `<span style="font-size:11px;color:var(--text-muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${notes}"><i class="fas fa-comment" style="font-size:9px;"></i> ${notes}</span>` : ''}
+      </div>
+      <div class="project-amounts">
+        <div class="amount-box">
+          <div class="amount-label">מחיר (כולל מע"מ)</div>
+          <div class="amount-value">${formatILS(price)}</div>
+        </div>
+        <div class="amount-box">
+          <div class="amount-label">${hasFinal ? 'עלות סופית' : 'עלות משוערת'}</div>
+          <div class="amount-value">${formatILS(hasFinal ? finalCost : estCost)}</div>
+        </div>
+      </div>
+      <div class="profit-bar-wrap">
+        <div class="profit-bar-label">
+          <span>רווח ${finalPct !== 0 ? 'סופי' : 'משוער'}</span>
+          <span class="${profitClass(displayPct)}" style="font-weight:700;">${displayPct}%</span>
+        </div>
+        <div class="profit-bar">
+          <div class="profit-bar-fill" style="width:${barWidth}%;background:${barColor};"></div>
+        </div>
+      </div>
+      ${projectQuotes[client + '|' + name] ? (() => {
+        const key = client + '|' + name;
+        const qs = projectQuotes[key]?.quoteStatus || 'בהמתנה לאישור';
+        const qsBadge = qs === 'אושר'
+          ? '<span class="qs-badge approved"><i class="fas fa-check-circle"></i> אושר</span>'
+          : '<span class="qs-badge pending"><i class="fas fa-clock"></i> בהמתנה לאישור</span>';
+        const safeKey = encodeURIComponent(key);
+        return `
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:11px;color:var(--text-muted);font-weight:600;">סטטוס הצעה:</span>
+            ${qsBadge}
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline btn-sm" style="flex:1;font-size:11px;" onclick="loadLinkedQuote(decodeURIComponent('${safeKey}'))">
+              <i class="fas fa-file-invoice-dollar"></i> פתח הצעה
+            </button>
+            <button class="btn btn-primary btn-sm" style="flex:1;font-size:11px;" onclick="openStockModal(decodeURIComponent('${safeKey}'))">
+              <i class="fas fa-boxes"></i> מלאי ורכש
+            </button>
+          </div>
+        </div>`;
+      })() : ''}
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// QUOTE BUILDER
+// ============================================================
+function renderQuotePage() {
+  if (!document.getElementById('quoteDate').value) {
+    document.getElementById('quoteDate').value = new Date().toISOString().split('T')[0];
+  }
+  if (quoteRowCount === 0) {
+    addQuoteRow();
+    addQuoteRow();
+    addQuoteRow();
+  }
+}
+
+function addQuoteRow() {
+  quoteRowCount++;
+  const rid = 'qrow_' + quoteRowCount;
+  const row = document.createElement('tr');
+  row.id = rid;
+  row.innerHTML = `
+    <td style="color:var(--text-muted);font-weight:600;">${quoteRowCount}</td>
+    <td>
+      <div class="catalog-search-container" style="position:relative;">
+        <input type="text" placeholder="חיפוש פריט..." oninput="catalogSearch_quote(this,'${rid}')" autocomplete="off"
+          style="width:100%;" onblur="setTimeout(()=>closeCatalogDd('${rid}'),200)">
+        <div class="catalog-dropdown" id="dd_${rid}"></div>
+      </div>
+    </td>
+    <td><input type="text" id="qgrp_${rid}" placeholder="קבוצה" readonly style="background:#f8fafc;width:80px;"></td>
+    <td><input type="text" id="qname_${rid}" placeholder="שם פריט" style="width:100%;"></td>
+    <td><input type="text" id="qunit_${rid}" placeholder="יחידה" style="width:70px;"></td>
+    <td><input type="number" id="qprice_${rid}" placeholder="0" oninput="calcQuoteRow('${rid}')" style="width:90px;"></td>
+    <td><input type="number" id="qqty_${rid}" placeholder="1" value="1" oninput="calcQuoteRow('${rid}')" style="width:70px;"></td>
+    <td><span id="qtotal_${rid}" style="font-weight:700;color:var(--primary);">₪0</span></td>
+    <td><button class="remove-row-btn" onclick="removeQuoteRow('${rid}')"><i class="fas fa-times"></i></button></td>
+  `;
+  document.getElementById('quoteItemsBody').appendChild(row);
+}
+
+function removeQuoteRow(rid) {
+  const row = document.getElementById(rid);
+  if (row) row.remove();
+  calcQuoteTotals();
+}
+
+const _ddCache = {};
+
+function catalogSearch_quote(input, rid) {
+  const q = input.value.trim().toLowerCase();
+  const dd = document.getElementById('dd_' + rid);
+  if (!q || q.length < 1) { dd.classList.remove('open'); return; }
+  const results = CATALOG_DATA.filter(item =>
+    item[3].toLowerCase().includes(q) || item[2].toLowerCase().includes(q) ||
+    item[1].toLowerCase().includes(q) || item[0].includes(q)
+  ).slice(0, 15);
+  if (!results.length) { dd.classList.remove('open'); return; }
+  _ddCache[rid] = results;
+  dd.innerHTML = results.map((item, idx) => `
+    <div class="catalog-item" onmousedown="selectCatalogItem('${rid}',${idx})">
+      <div class="item-name">${item[3]}${item[4] ? ' <span style="color:var(--text-muted);font-size:11px;">(${item[4]})</span>' : ''} <span class="item-price">${formatILS(item[5])}</span></div>
+      <div class="item-meta">${item[1]} › ${item[2]}</div>
+    </div>
+  `).join('');
+  dd.classList.add('open');
+}
+
+function selectCatalogItem(rid, idx) {
+  const item = _ddCache[rid]?.[idx];
+  if (!item) return;
+  document.getElementById('qgrp_'   + rid).value = item[1] || '';
+  document.getElementById('qname_'  + rid).value = item[3] + (item[4] ? ' ' + item[4] : '');
+  document.getElementById('qunit_'  + rid).value = item[4] || '';
+  document.getElementById('qprice_' + rid).value = item[5] || 0;
+  const searchInput = document.querySelector('#' + rid + ' input[placeholder="חיפוש פריט..."]');
+  if (searchInput) searchInput.value = item[3];
+  closeCatalogDd(rid);
+  calcQuoteRow(rid);
+}
+
+function closeCatalogDd(rid) {
+  const dd = document.getElementById('dd_' + rid);
+  if (dd) dd.classList.remove('open');
+}
+
+function calcQuoteRow(rid) {
+  const price = parseFloat(document.getElementById('qprice_' + rid)?.value) || 0;
+  const qty = parseFloat(document.getElementById('qqty_' + rid)?.value) || 0;
+  const total = price * qty;
+  const el = document.getElementById('qtotal_' + rid);
+  if (el) el.textContent = formatILS(total);
+  calcQuoteTotals();
+}
+
+function onProfitPctChange() {
+  const sel = document.getElementById('quoteProfitPct');
+  const ci = document.getElementById('quoteProfitCustom');
+  if (sel.value === 'custom') {
+    ci.style.display = '';
+    ci.focus();
+  } else {
+    ci.style.display = 'none';
+    ci.value = '';
+  }
+  calcQuoteTotals();
+}
+
+function getProfitPct() {
+  const sel = document.getElementById('quoteProfitPct');
+  if (sel && sel.value === 'custom') {
+    return parseFloat(document.getElementById('quoteProfitCustom')?.value) || 0;
+  }
+  return parseFloat(sel?.value) || 0;
+}
+
+function calcQuoteTotals() {
+  let subtotal = 0;
+  document.querySelectorAll('#quoteItemsBody tr').forEach(row => {
+    const rid = row.id;
+    const price = parseFloat(document.getElementById('qprice_' + rid)?.value) || 0;
+    const qty = parseFloat(document.getElementById('qqty_' + rid)?.value) || 0;
+    subtotal += price * qty;
+  });
+  const vat = subtotal * 0.18;
+  const withVat = subtotal + vat;
+  const profitPct = getProfitPct();
+  const profitAmount = subtotal * (profitPct / 100);
+  const finalTotal = withVat + profitAmount;
+
+  document.getElementById('totalSubtotal').textContent = formatILS(subtotal);
+  document.getElementById('totalVat').textContent = formatILS(vat);
+  document.getElementById('totalWithVat').textContent = formatILS(withVat);
+  document.getElementById('totalProfit').textContent = formatILS(profitAmount);
+  document.getElementById('totalFinal').textContent = formatILS(finalTotal);
+  const pctLabel = document.getElementById('profitPctLabel');
+  if (pctLabel) pctLabel.textContent = profitPct;
+}
+
+function clearQuote() {
+  if (!confirm('לנקות את ההצעה?')) return;
+  document.getElementById('quoteClient').value = '';
+  document.getElementById('quoteProject').value = '';
+  document.getElementById('quoteNotes').value = '';
+  document.getElementById('quoteItemsBody').innerHTML = '';
+  quoteRowCount = 0;
+  addQuoteRow(); addQuoteRow(); addQuoteRow();
+  calcQuoteTotals();
+}
+
+function parseILS(s) {
+  return parseFloat((s || '0').replace(/[₪,\s]/g, '')) || 0;
+}
+
+function getQuoteItems() {
+  const items = [];
+  document.querySelectorAll('#quoteItemsBody tr').forEach(row => {
+    const rid = row.id;
+    const name = document.getElementById('qname_' + rid)?.value?.trim() || '';
+    const grp  = document.getElementById('qgrp_'  + rid)?.value?.trim() || '';
+    const unit = document.getElementById('qunit_' + rid)?.value?.trim() || '';
+    const price = parseFloat(document.getElementById('qprice_' + rid)?.value) || 0;
+    const qty   = parseFloat(document.getElementById('qqty_'   + rid)?.value) || 1;
+    if (name || price > 0) items.push({ name, grp, unit, price, qty, total: price * qty });
+  });
+  return items;
+}
+
+function buildQuoteData(client, project) {
+  return {
+    client, project,
+    date: document.getElementById('quoteDate').value,
+    profitPct: getProfitPct(),
+    items: getQuoteItems(),
+    subtotal:   parseILS(document.getElementById('totalSubtotal').textContent),
+    vat:        parseILS(document.getElementById('totalVat').textContent),
+    withVat:    parseILS(document.getElementById('totalWithVat').textContent),
+    profit:     parseILS(document.getElementById('totalProfit').textContent),
+    finalTotal: parseILS(document.getElementById('totalFinal').textContent)
+  };
+}
+
+function saveQuoteOnly() {
+  const client = document.getElementById('quoteClient').value.trim();
+  const project = document.getElementById('quoteProject').value.trim();
+  if (!client || !project) { showToast('יש למלא שם לקוח ופרויקט', 'error'); return; }
+  const q = buildQuoteData(client, project);
+  projectQuotes[client + '|' + project] = q;
+  localStorage.setItem('projectQuotes', JSON.stringify(projectQuotes));
+  showToast('הצעת המחיר נשמרה!', 'success');
+}
+
+function saveQuoteAsProject() {
+  const client = document.getElementById('quoteClient').value.trim();
+  const project = document.getElementById('quoteProject').value.trim();
+  if (!client || !project) { showToast('יש למלא שם לקוח ופרויקט', 'error'); return; }
+  const q = buildQuoteData(client, project);
+  projectQuotes[client + '|' + project] = q;
+  localStorage.setItem('projectQuotes', JSON.stringify(projectQuotes));
+
+  const dateStr = q.date ? new Date(q.date).toLocaleDateString('he-IL') : new Date().toLocaleDateString('he-IL');
+  const estPct = q.finalTotal > 0 ? Math.round((q.profit / q.finalTotal) * 100) : 0;
+  const projEntry = [client, project, dateStr, 'תומחר', q.finalTotal, q.subtotal, q.profit, 0, 0, '', estPct, 0];
+
+  const existIdx = PROJECTS_DATA.findIndex(p => p[0] === client && p[1] === project);
+  if (existIdx >= 0) {
+    PROJECTS_DATA[existIdx] = projEntry;
+    const saved = JSON.parse(localStorage.getItem('newProjects') || '[]');
+    const ni = saved.findIndex(p => p[0] === client && p[1] === project);
+    if (ni >= 0) saved[ni] = projEntry; else saved.push(projEntry);
+    localStorage.setItem('newProjects', JSON.stringify(saved));
+    showToast('הפרויקט עודכן מהצעת המחיר!', 'success');
+  } else {
+    PROJECTS_DATA.push(projEntry);
+    const saved = JSON.parse(localStorage.getItem('newProjects') || '[]');
+    saved.push(projEntry);
+    localStorage.setItem('newProjects', JSON.stringify(saved));
+    showToast('פרויקט חדש נוצר מהצעת המחיר!', 'success');
+  }
+  updateProjectCounts(PROJECTS_DATA);
+  renderProjectsGrid();
+}
+
+// Legacy alias
+function saveQuote() { saveQuoteOnly(); }
+
+// ============================================================
+// STOCK & PURCHASE ORDER MANAGEMENT
+// ============================================================
+let _stockModalKey = null;
+
+function openStockModal(key) {
+  _stockModalKey = key;
+  const q = projectQuotes[key];
+  if (!q) return;
+  const qs = q.quoteStatus || 'בהמתנה לאישור';
+  const stock = projectStock[key] || (q.items || []).map(i => ({ name: i.name, grp: i.grp, qty: i.qty, stock: 'קיים במלאי' }));
+
+  document.getElementById('stockModalTitle').innerHTML =
+    `<i class="fas fa-boxes" style="color:var(--primary);margin-left:8px;"></i> ${q.project} — ${q.client}`;
+
+  const approvedBlock = qs === 'אושר' ? `
+    <table class="stock-table">
+      <thead><tr>
+        <th>פריט</th><th style="width:60px;text-align:center;">כמות</th>
+        <th style="width:160px;">סטטוס מלאי</th>
+      </tr></thead>
+      <tbody>
+        ${stock.map((item, idx) => `<tr>
+          <td style="font-weight:600;">${item.name || '—'}<br><span style="font-size:11px;color:var(--text-muted);">${item.grp || ''}</span></td>
+          <td style="text-align:center;">${item.qty || 1}</td>
+          <td>
+            <select class="stock-select" id="stock_${idx}">
+              <option value="קיים במלאי" ${item.stock === 'קיים במלאי' ? 'selected' : ''}>✓ קיים במלאי</option>
+              <option value="דורש הזמנה" ${item.stock === 'דורש הזמנה' ? 'selected' : ''}>⚠ דורש הזמנה</option>
+            </select>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <div style="margin-top:12px;font-size:12px;color:var(--text-muted);"><i class="fas fa-info-circle"></i> פריטים שדורשים הזמנה יופיעו במודול "הזמנות רכש"</div>
+  ` : `<div style="text-align:center;padding:30px;color:var(--text-muted);">
+    <i class="fas fa-info-circle" style="font-size:28px;margin-bottom:10px;display:block;"></i>
+    <p>יש לאשר את הצעת המחיר כדי לנהל מלאי ורכש</p>
+  </div>`;
+
+  document.getElementById('stockModalBody').innerHTML = `
+    <div class="quote-status-row">
+      <span class="quote-status-label">סטטוס הצעה:</span>
+      <span class="qs-badge ${qs === 'אושר' ? 'approved' : 'pending'}" id="qsBadgeModal">
+        ${qs === 'אושר' ? '<i class="fas fa-check-circle"></i> אושר' : '<i class="fas fa-clock"></i> בהמתנה לאישור'}
+      </span>
+      ${qs !== 'אושר' ? `<button class="btn btn-primary btn-sm" onclick="approveQuote('${encodeURIComponent(key)}')">
+        <i class="fas fa-check"></i> אשר הצעה
+      </button>` : `<button class="btn btn-outline btn-sm" style="color:var(--text-muted);" onclick="unapproveQuote('${encodeURIComponent(key)}')">
+        <i class="fas fa-undo"></i> בטל אישור
+      </button>`}
+    </div>
+    <div id="stockItemsBlock">${approvedBlock}</div>
+  `;
+
+  // store current stock items for togglePoStatus
+  window._stockItems = stock;
+  document.getElementById('stockModal').classList.add('open');
+}
+
+// ============================================================
+// PO MODULE
+// ============================================================
+function updatePOBadge() {
+  let count = 0;
+  Object.entries(projectStock).forEach(([key, items]) => {
+    const pst = poStatuses[key] || {};
+    items.forEach((item, idx) => {
+      if (item.stock === 'דורש הזמנה' && pst[idx] !== 'התקבל') count++;
+    });
+  });
+  const badge = document.getElementById('poBadge');
+  if (badge) badge.textContent = count || 0;
+}
+
+function filterPO(status, btn) {
+  poFilter = status;
+  document.querySelectorAll('#page-po .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderPOPage();
+}
+
+function renderPOPage() {
+  const rows = [];
+  Object.entries(projectStock).forEach(([key, items]) => {
+    const q = projectQuotes[key];
+    const parts = key.split('|');
+    const client = q?.client || parts[0] || '';
+    const project = q?.project || parts[1] || '';
+    const pst = poStatuses[key] || {};
+    items.forEach((item, idx) => {
+      if (item.stock === 'דורש הזמנה') {
+        rows.push({ key, client, project, item, idx, status: pst[idx] || 'ממתין' });
+      }
+    });
+  });
+
+  updatePOBadge();
+
+  let filtered = rows;
+  if (poFilter === 'ממתין') filtered = rows.filter(r => r.status !== 'התקבל');
+  else if (poFilter === 'התקבל') filtered = rows.filter(r => r.status === 'התקבל');
+
+  const tbody = document.getElementById('poBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="padding:30px;text-align:center;color:var(--text-muted);">
+      <i class="fas fa-check-circle" style="font-size:28px;margin-bottom:8px;display:block;color:var(--success);"></i>
+      אין הזמנות רכש ${poFilter !== 'all' ? 'בסטטוס זה' : 'פעילות'}
+    </td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(r => `
+    <tr style="${r.status === 'התקבל' ? 'opacity:0.6;' : ''}">
+      <td style="font-weight:600;">${r.project}</td>
+      <td>${r.client}</td>
+      <td>${r.item.name || '—'}<br><span style="font-size:11px;color:var(--text-muted);">${r.item.grp || ''}</span></td>
+      <td style="text-align:center;">${r.item.qty || 1}</td>
+      <td>
+        <select class="stock-select" onchange="savePOStatus('${encodeURIComponent(r.key)}',${r.idx},this.value)">
+          <option value="ממתין" ${r.status !== 'התקבל' ? 'selected' : ''}>⏳ ממתין</option>
+          <option value="התקבל" ${r.status === 'התקבל' ? 'selected' : ''}>✅ התקבל</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function savePOStatus(safeKey, idx, status) {
+  const key = decodeURIComponent(safeKey);
+  if (!poStatuses[key]) poStatuses[key] = {};
+  poStatuses[key][idx] = status;
+  localStorage.setItem('poStatuses', JSON.stringify(poStatuses));
+  checkProjectReadiness(key);
+  renderPOPage();
+}
+
+function checkProjectReadiness(key) {
+  const stock = projectStock[key];
+  if (!stock || !stock.length) return;
+  const q = projectQuotes[key];
+  if (!q || q.quoteStatus !== 'אושר') return;
+  const pst = poStatuses[key] || {};
+  // Ready only when: all items in stock AND any ordered items also received
+  const allReady = stock.every((item, idx) =>
+    item.stock === 'קיים במלאי' && pst[idx] !== 'ממתין'
+  );
+  if (!allReady) return;
+  const client = q.client, project = q.project;
+  const projIdx = PROJECTS_DATA.findIndex(p => p[0] === client && p[1] === project);
+  if (projIdx < 0 || PROJECTS_DATA[projIdx][3] === 'מוכן לתחילת עבודה') return;
+  PROJECTS_DATA[projIdx][3] = 'מוכן לתחילת עבודה';
+  const saved = JSON.parse(localStorage.getItem('newProjects') || '[]');
+  const ni = saved.findIndex(p => p[0] === client && p[1] === project);
+  if (ni >= 0) {
+    saved[ni][3] = 'מוכן לתחילת עבודה';
+  } else {
+    saved.push([...PROJECTS_DATA[projIdx]]);
+  }
+  localStorage.setItem('newProjects', JSON.stringify(saved));
+  updateProjectCounts(PROJECTS_DATA);
+  renderProjectsGrid();
+  showToast(`${project} — מוכן לתחילת עבודה! ✓`, 'success');
+}
+
+function approveQuote(safeKey) {
+  const key = decodeURIComponent(safeKey);
+  if (!projectQuotes[key]) return;
+  projectQuotes[key].quoteStatus = 'אושר';
+  localStorage.setItem('projectQuotes', JSON.stringify(projectQuotes));
+  openStockModal(key);
+  renderProjectsGrid();
+}
+
+function unapproveQuote(safeKey) {
+  const key = decodeURIComponent(safeKey);
+  if (!projectQuotes[key]) return;
+  projectQuotes[key].quoteStatus = 'בהמתנה לאישור';
+  localStorage.setItem('projectQuotes', JSON.stringify(projectQuotes));
+  openStockModal(key);
+  renderProjectsGrid();
+}
+
+function saveStockModal() {
+  const key = _stockModalKey;
+  if (!key || !projectQuotes[key]) { closeModal('stockModal'); return; }
+  const q = projectQuotes[key];
+  const items = q.items || [];
+  const saved = items.map((item, idx) => {
+    const stockSel = document.getElementById('stock_' + idx);
+    return {
+      name: item.name, grp: item.grp, qty: item.qty,
+      stock: stockSel ? stockSel.value : 'קיים במלאי'
+    };
+  });
+  projectStock[key] = saved;
+  localStorage.setItem('projectStock', JSON.stringify(projectStock));
+  checkProjectReadiness(key);
+  updatePOBadge();
+  closeModal('stockModal');
+  renderProjectsGrid();
+  showToast('סטטוס המלאי נשמר!', 'success');
+}
+
+function loadLinkedQuote(key) {
+  const q = projectQuotes[key];
+  if (!q) return;
+  document.getElementById('quoteClient').value  = q.client  || '';
+  document.getElementById('quoteProject').value = q.project || '';
+  document.getElementById('quoteDate').value    = q.date    || '';
+  const _knownPcts = ['0','20','30','40','50','60'];
+  const _pp = q.profitPct != null ? String(q.profitPct) : '20';
+  if (_knownPcts.includes(_pp)) {
+    document.getElementById('quoteProfitPct').value = _pp;
+    document.getElementById('quoteProfitCustom').style.display = 'none';
+  } else {
+    document.getElementById('quoteProfitPct').value = 'custom';
+    document.getElementById('quoteProfitCustom').value = _pp;
+    document.getElementById('quoteProfitCustom').style.display = '';
+  }
+  document.getElementById('quoteItemsBody').innerHTML = '';
+  quoteRowCount = 0;
+  (q.items || []).forEach(item => {
+    addQuoteRow();
+    const rid = 'qrow_' + quoteRowCount;
+    document.getElementById('qname_'  + rid).value = item.name  || '';
+    document.getElementById('qgrp_'   + rid).value = item.grp   || '';
+    document.getElementById('qunit_'  + rid).value = item.unit  || '';
+    document.getElementById('qprice_' + rid).value = item.price || 0;
+    document.getElementById('qqty_'   + rid).value = item.qty   || 1;
+    calcQuoteRow(rid);
+  });
+  if (!q.items || q.items.length === 0) { addQuoteRow(); addQuoteRow(); addQuoteRow(); }
+  calcQuoteTotals();
+  showPage('quote');
+}
+
+function printQuote() {
+  window.print();
+}
+
+// ============================================================
+// CATALOG
+// ============================================================
+function renderCatalog() {
+  filterCatalog(catalogFilter, null);
+}
+
+function filterCatalog(group, btn) {
+  catalogFilter = group;
+  document.querySelectorAll('#page-catalog .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderCatalogTable();
+}
+
+function searchCatalog(q) {
+  catalogSearch = q.toLowerCase();
+  renderCatalogTable();
+}
+
+function renderCatalogTable() {
+  let data = CATALOG_DATA;
+  if (catalogFilter !== 'all') data = data.filter(r => r[1] === catalogFilter || r[2] === catalogFilter);
+  if (catalogSearch) data = data.filter(r =>
+    r[3].toLowerCase().includes(catalogSearch) || r[2].toLowerCase().includes(catalogSearch) ||
+    r[0].includes(catalogSearch) || r[1].toLowerCase().includes(catalogSearch)
+  );
+  document.getElementById('catalogBody').innerHTML = data.map(r => `
+    <tr>
+      <td style="color:var(--text-muted);font-size:12px;font-weight:600;">${r[0]}</td>
+      <td>${groupTag(r[1])}</td>
+      <td style="font-size:13px;">${r[2]}</td>
+      <td style="font-weight:600;">${r[3]}</td>
+      <td style="color:var(--text-secondary);font-size:13px;">${r[4]}</td>
+      <td style="font-weight:700;color:var(--primary);">${r[5] > 0 ? formatILS(r[5]) : '—'}</td>
+      <td style="font-size:12px;color:var(--text-secondary);">${r[7]||''}</td>
+      <td style="font-size:12px;color:var(--text-muted);">${r[6]||''}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="openEditCatalogPrice('${r[0]}')" title="ערוך" style="padding:4px 8px;"><i class="fas fa-pencil-alt"></i></button></td>
+    </tr>
+  `).join('');
+}
+
+// ============================================================
+// CATALOG EDIT / ADD
+// ============================================================
+let _editCatalogItemId = null;
+
+function openAddCatalogModal() {
+  ['newItemSubGroup','newItemName','newItemUnit','newItemNotes','newItemSupplier'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('newItemPrice').value = '';
+  document.getElementById('newItemGroup').value = 'חומר גלם';
+  document.getElementById('addCatalogModal').classList.add('open');
+}
+
+function saveCatalogItem() {
+  const name = document.getElementById('newItemName').value.trim();
+  if (!name) { showToast('יש למלא שם פריט', 'error'); return; }
+  const group    = document.getElementById('newItemGroup').value;
+  const subGroup = document.getElementById('newItemSubGroup').value.trim();
+  const unit     = document.getElementById('newItemUnit').value.trim();
+  const price    = parseFloat(document.getElementById('newItemPrice').value) || 0;
+  const notes    = document.getElementById('newItemNotes').value.trim();
+  const supplier = document.getElementById('newItemSupplier').value.trim();
+  const maxId    = Math.max(0, ...CATALOG_DATA.map(r => parseFloat(r[0]) || 0));
+  const newItem  = [maxId + 1, group, subGroup, name, unit, price, notes, supplier];
+  CATALOG_DATA.push(newItem);
+  const custom = JSON.parse(localStorage.getItem('customCatalogItems') || '[]');
+  custom.push(newItem);
+  localStorage.setItem('customCatalogItems', JSON.stringify(custom));
+  closeModal('addCatalogModal');
+  renderCatalogTable();
+  showToast('הפריט נוסף למחירון!', 'success');
+}
+
+function openEditCatalogPrice(id) {
+  const item = CATALOG_DATA.find(r => String(r[0]) === String(id));
+  if (!item) return;
+  _editCatalogItemId = id;
+  document.getElementById('editCatalogPriceTitle').innerHTML =
+    `<i class="fas fa-pencil-alt" style="color:var(--primary);margin-left:8px;"></i> עריכת פריט: ${item[3]}`;
+  document.getElementById('editCatalogPriceInput').value = item[5] || 0;
+  document.getElementById('editCatalogSupplierInput').value = item[7] || '';
+  document.getElementById('editCatalogPriceModal').classList.add('open');
+}
+
+function saveCatalogPrice() {
+  const id = _editCatalogItemId;
+  if (id == null) return;
+  const price    = parseFloat(document.getElementById('editCatalogPriceInput').value) || 0;
+  const supplier = document.getElementById('editCatalogSupplierInput').value.trim();
+  const item = CATALOG_DATA.find(r => String(r[0]) === String(id));
+  if (item) { item[5] = price; item[7] = supplier; }
+  const overrides = JSON.parse(localStorage.getItem('catalogPriceOverrides') || '{}');
+  overrides[String(id)] = { price, supplier };
+  localStorage.setItem('catalogPriceOverrides', JSON.stringify(overrides));
+  closeModal('editCatalogPriceModal');
+  renderCatalogTable();
+  showToast('הפריט עודכן!', 'success');
+}
+
+// ============================================================
+// PAINT TRACKING
+// ============================================================
+function renderPaint() {
+  filterPaint(paintFilter, null);
+}
+
+function filterPaint(status, btn) {
+  paintFilter = status;
+  document.querySelectorAll('#page-paint .filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderPaintTable();
+}
+
+function searchPaint(q) {
+  paintSearch = q.toLowerCase();
+  renderPaintTable();
+}
+
+function renderPaintTable() {
+  let data = paintData;
+  if (paintFilter === 'כן') data = data.filter(r => r[6] === 'כן');
+  else if (paintFilter === 'לא') data = data.filter(r => r[6] === 'לא');
+  if (paintSearch) data = data.filter(r =>
+    r[0].toLowerCase().includes(paintSearch) || r[1].toLowerCase().includes(paintSearch) ||
+    r[3].toLowerCase().includes(paintSearch)
+  );
+  const tbody = document.getElementById('paintBody');
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><i class="fas fa-paint-brush"></i><br>אין נתונים</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map((r, i) => `
+    <tr>
+      <td style="color:var(--text-muted);font-size:12px;">${i+1}</td>
+      <td style="font-weight:600;">${r[0]}</td>
+      <td>${r[1]}</td>
+      <td style="color:var(--text-secondary);font-size:12px;">${r[2]}</td>
+      <td><span style="font-size:12px;background:#f1f5f9;padding:2px 8px;border-radius:6px;">${r[3]}</span></td>
+      <td style="font-size:12px;">${r[4]}</td>
+      <td style="font-weight:700;">${r[5] ? formatILS(r[5]) : '—'}</td>
+      <td>${r[6]==='כן' ? '<span class="badge badge-success">שולם</span>' : '<span class="badge badge-danger">לא שולם</span>'}</td>
+      <td style="font-size:12px;color:var(--text-muted);">${r[7]||''}</td>
+    </tr>
+  `).join('');
+}
+
+function openAddPaintModal() {
+  document.getElementById('paintDateInput').value = new Date().toISOString().split('T')[0];
+  document.getElementById('addPaintModal').classList.add('open');
+}
+
+function addPaintRecord() {
+  const client = document.getElementById('paintClientInput').value.trim();
+  const item = document.getElementById('paintItemInput').value.trim();
+  const date = document.getElementById('paintDateInput').value;
+  const color = document.getElementById('paintColorInput').value.trim();
+  const type = document.getElementById('paintTypeInput').value;
+  const price = parseFloat(document.getElementById('paintPriceInput').value) || 0;
+  const paid = document.getElementById('paintPaidInput').value;
+  const notes = document.getElementById('paintNotesInput').value.trim();
+  if (!client || !item) { showToast('יש למלא שם לקוח ותיאור רהיט', 'error'); return; }
+  paintData.push([client, item, date || new Date().toLocaleDateString('he-IL'), color, type, price, paid, notes]);
+  localStorage.setItem('paintData', JSON.stringify(paintData));
+  closeModal('addPaintModal');
+  renderPaintTable();
+  showToast('רשומת צבע נוספה בהצלחה!', 'success');
+  // Clear inputs
+  ['paintClientInput','paintItemInput','paintColorInput','paintNotesInput','paintPriceInput'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+}
+
+// ============================================================
+// PLATES
+// ============================================================
+function renderPlates() {
+  // Stats
+  const latestMelamin = PLATES_MELAMIN[PLATES_MELAMIN.length - 1];
+  const latestMdf = PLATES_MDF[PLATES_MDF.length - 1];
+  const latestSandwich = PLATES_SANDWICH[PLATES_SANDWICH.length - 1];
+  document.getElementById('platesStats').innerHTML = `
+    <div class="stat-card blue">
+      <div class="stat-icon blue"><i class="fas fa-layer-group"></i></div>
+      <div class="stat-value">${formatILS(latestMelamin[1])}</div>
+      <div class="stat-label">מלמין ג'ומר - מחיר נוכחי ליחידה</div>
+      <div class="stat-change">${latestMelamin[0]} | ספק: ${latestMelamin[4]}</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-icon green"><i class="fas fa-layer-group"></i></div>
+      <div class="stat-value">${formatILS(latestMdf[1])}</div>
+      <div class="stat-label">MDF ירוק - מחיר נוכחי ליחידה</div>
+      <div class="stat-change">${latestMdf[0]} | ספק: ${latestMdf[4]}</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-icon orange"><i class="fas fa-layer-group"></i></div>
+      <div class="stat-value">${formatILS(latestSandwich[1])}</div>
+      <div class="stat-label">סנדביץ' מטבחים - מחיר נוכחי ליחידה</div>
+      <div class="stat-change">${latestSandwich[0]} | ספק: ${latestSandwich[4]}</div>
+    </div>
+  `;
+
+  const renderPTable = (id, data) => {
+    document.getElementById(id).innerHTML = data.map((r, i) => {
+      const prev = data[i-1];
+      const trend = prev ? (r[1] > prev[1] ? '▲' : r[1] < prev[1] ? '▼' : '—') : '—';
+      const tcolor = prev ? (r[1] > prev[1] ? 'var(--danger)' : r[1] < prev[1] ? 'var(--success)' : 'var(--text-muted)') : 'var(--text-muted)';
+      return `<tr>
+        <td style="font-size:12px;">${r[0]}</td>
+        <td style="font-weight:700;">₪${r[1]} <span style="color:${tcolor};font-size:10px;">${trend}</span></td>
+        <td>${r[2]}</td>
+        <td style="font-weight:600;color:var(--primary);">${formatILS(r[3])}</td>
+        <td style="font-size:12px;color:var(--text-muted);">${r[4]}</td>
+      </tr>`;
+    }).join('');
+  };
+  renderPTable('platesBodyMelamin', PLATES_MELAMIN);
+  renderPTable('platesBodyMdf', PLATES_MDF);
+  renderPTable('platesBodySandwich', PLATES_SANDWICH);
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('modal-overlay')) {
+    e.target.classList.remove('open');
+  }
+});
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  // Apply catalog overrides (price + supplier) from localStorage
+  const catalogOverrides = JSON.parse(localStorage.getItem('catalogPriceOverrides') || '{}');
+  Object.entries(catalogOverrides).forEach(([id, val]) => {
+    const item = CATALOG_DATA.find(r => String(r[0]) === String(id));
+    if (!item) return;
+    if (val && typeof val === 'object') {
+      if (val.price != null) item[5] = val.price;
+      if (val.supplier != null) item[7] = val.supplier;
+    } else {
+      item[5] = val; // legacy: plain number
+    }
+  });
+  // Add custom catalog items
+  const customCatalog = JSON.parse(localStorage.getItem('customCatalogItems') || '[]');
+  customCatalog.forEach(item => {
+    if (!CATALOG_DATA.find(r => String(r[0]) === String(item[0]))) CATALOG_DATA.push(item);
+  });
+
+  // Set date
+  const now = new Date();
+  document.getElementById('currentDate').textContent = now.toLocaleDateString('he-IL', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  renderDashboard();
+  updateProjectCounts(PROJECTS_DATA);
+  updatePOBadge();
+}
+
+init();
+</script>
+</body>
+</html>
