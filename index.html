@@ -1965,5 +1965,13 @@ drawSteps();renderReadiness({});render();
   <div id="materialChoices" class="material-results"></div>
  </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://lhrtwbrfrtxvjomofdmm.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_eh2yb0lquEwCnYB1PpmT9g_buRej6dp";
 
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  console.log("Supabase connected");
+</script>
 </body></html>
