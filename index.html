@@ -1969,9 +1969,109 @@ drawSteps();renderReadiness({});render();
 <script>
   const SUPABASE_URL = "https://lhrtwbrfrtxvjomofdmm.supabase.co";
   const SUPABASE_KEY = "sb_publishable_eh2yb0lquEwCnYB1PpmT9g_buRej6dp";
-
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const CLOUD_TABLE = "app_state";
+  let cloudUser = null;
+  let cloudReady = false;
+  let cloudSaveTimer = null;
+  let cloudSaving = false;
+  let cloudSaveQueued = false;
+
+  function cloudStatus(text, bad=false){
+    let el=document.getElementById("cloudStatus");
+    if(el){el.textContent=text;el.style.color=bad?"#8b2f2f":"#355f4b";}
+  }
+
+  function ensureAuthOverlay(){
+    if(document.getElementById("cloudAuth"))return;
+    const wrap=document.createElement("div");
+    wrap.id="cloudAuth";
+    wrap.style.cssText="position:fixed;inset:0;background:#f4f6f3;z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl";
+    wrap.innerHTML=`<div style="width:min(430px,96vw);background:#fff;border:1px solid #dde4de;border-radius:16px;padding:24px;box-shadow:0 18px 50px rgba(0,0,0,.12)">
+      <h2 style="margin-top:0">כניסה למערכת הנגרייה</h2>
+      <div style="color:#6f7b73;margin-bottom:16px">התחבר כדי לסנכרן את אותם הנתונים בכל המכשירים.</div>
+      <label style="display:block;font-size:12px;margin-bottom:5px">אימייל</label><input id="cloudEmail" type="email" style="width:100%;padding:11px;border:1px solid #dde4de;border-radius:8px;margin-bottom:10px">
+      <label style="display:block;font-size:12px;margin-bottom:5px">סיסמה</label><input id="cloudPassword" type="password" style="width:100%;padding:11px;border:1px solid #dde4de;border-radius:8px;margin-bottom:14px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" onclick="cloudLogin()">כניסה</button><button class="secondary" onclick="cloudSignup()">יצירת משתמש</button></div>
+      <div id="cloudStatus" style="margin-top:12px;font-size:13px"></div>
+    </div>`;
+    document.body.appendChild(wrap);
+  }
+
+  function hideAuthOverlay(){let el=document.getElementById("cloudAuth");if(el)el.style.display="none";}
+  function showAuthOverlay(){ensureAuthOverlay();document.getElementById("cloudAuth").style.display="flex";}
+
+  async function cloudLogin(){
+    const email=document.getElementById("cloudEmail").value.trim(), password=document.getElementById("cloudPassword").value;
+    if(!email||!password)return cloudStatus("יש להזין אימייל וסיסמה",true);
+    cloudStatus("מתחבר...");
+    const {error}=await supabaseClient.auth.signInWithPassword({email,password});
+    if(error)return cloudStatus("שגיאה: "+error.message,true);
+  }
+
+  async function cloudSignup(){
+    const email=document.getElementById("cloudEmail").value.trim(), password=document.getElementById("cloudPassword").value;
+    if(!email||password.length<6)return cloudStatus("יש להזין אימייל וסיסמה של לפחות 6 תווים",true);
+    cloudStatus("יוצר משתמש...");
+    const {data,error}=await supabaseClient.auth.signUp({email,password});
+    if(error)return cloudStatus("שגיאה: "+error.message,true);
+    if(!data.session)cloudStatus("המשתמש נוצר. בדוק את האימייל לאישור החשבון ואז לחץ כניסה.");
+  }
+
+  async function loadCloudState(){
+    if(!cloudUser)return;
+    const {data,error}=await supabaseClient.from(CLOUD_TABLE).select("data").eq("user_id",cloudUser.id).maybeSingle();
+    if(error){console.error("Cloud load failed",error);alert("החיבור לענן קיים, אבל טבלת app_state עדיין לא מוכנה. יש ליצור אותה ב-Supabase.");return;}
+    if(data?.data){
+      db=data.data;
+      localStorage.setItem(KEY,JSON.stringify(db));
+    }else{
+      const {error:insertError}=await supabaseClient.from(CLOUD_TABLE).insert({user_id:cloudUser.id,data:db});
+      if(insertError){console.error("Cloud initialize failed",insertError);alert("לא הצלחתי ליצור שמירה ראשונה בענן: "+insertError.message);return;}
+    }
+    cloudReady=true;
+    hideAuthOverlay();
+    render();
+    console.log("Supabase cloud sync ready");
+  }
+
+  async function saveCloudNow(){
+    if(!cloudReady||!cloudUser)return;
+    if(cloudSaving){cloudSaveQueued=true;return;}
+    cloudSaving=true;
+    const payload=JSON.parse(JSON.stringify(db));
+    const {error}=await supabaseClient.from(CLOUD_TABLE).upsert({user_id:cloudUser.id,data:payload,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+    cloudSaving=false;
+    if(error)console.error("Cloud save failed",error);
+    if(cloudSaveQueued){cloudSaveQueued=false;saveCloudNow();}
+  }
+
+  function scheduleCloudSave(){
+    if(!cloudReady)return;
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer=setTimeout(saveCloudNow,350);
+  }
+
+  const originalSetItem=Storage.prototype.setItem;
+  Storage.prototype.setItem=function(k,v){
+    originalSetItem.call(this,k,v);
+    if(this===localStorage && k===KEY)scheduleCloudSave();
+  };
+
+  async function cloudLogout(){await supabaseClient.auth.signOut();location.reload();}
+
+  async function startCloud(){
+    ensureAuthOverlay();
+    const {data:{session}}=await supabaseClient.auth.getSession();
+    if(session?.user){cloudUser=session.user;await loadCloudState();}
+    else showAuthOverlay();
+    supabaseClient.auth.onAuthStateChange(async(event,session)=>{
+      if(event==="SIGNED_IN"&&session?.user){cloudUser=session.user;await loadCloudState();}
+      if(event==="SIGNED_OUT"){cloudUser=null;cloudReady=false;showAuthOverlay();}
+    });
+  }
 
   console.log("Supabase connected");
+  startCloud();
 </script>
 </body></html>
