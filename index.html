@@ -243,7 +243,7 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
  .quote-head,.quote-client,.quote-single-spec,.quote-items,.quote-totals,.quote-terms{break-inside:avoid;page-break-inside:avoid}
 }
 </style></head>
-<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.47</div><div class="nav">
+<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.48</div><div class="nav">
 <button data-v="dashboard" class="active">דשבורד</button><button data-v="projects">פרויקטים</button><button data-v="furniture">כרטיס רהיט</button><button data-v="quotes">הצעות מחיר</button><button data-v="production">ביצוע</button><button data-v="schedule">לו״ז עבודה</button><button data-v="performance">סיכום ביצוע</button><button data-v="purchasing">רכש</button><button data-v="pricebook">מחירון</button><button data-v="settings">הגדרות תהליך</button>
 </div></aside><main>
 
@@ -1193,7 +1193,53 @@ function buildQuoteDocument(){
 }
 function previewQuote(){if(!buildQuoteDocument())return;quoteEditor.style.display="none";quotePreviewWrap.style.display="block"}
 function closeQuotePreview(){quotePreviewWrap.style.display="none";quoteEditor.style.display="block"}
-function printQuote(){if(!buildQuoteDocument())return;quotePreviewWrap.style.display="block";document.querySelectorAll(".view").forEach(x=>x.classList.remove("print"));quotes.classList.add("print");window.print()}
+function printQuote(){
+  if(!buildQuoteDocument())return;
+  const body=quoteDocument.innerHTML;
+  const title=`הצעת מחיר ${qnum.value||''}`;
+  const doc=`<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>
+  @page{size:A4 portrait;margin:10mm}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#fff;color:#17231e;font-family:Arial,sans-serif;direction:rtl;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{padding:0}
+  .quote-doc{width:100%;max-width:none;margin:0;background:#fff;padding:0;border:0;border-radius:0}
+  .quote-head{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;border:0;padding:0 0 12px;margin:0 0 12px;position:relative}
+  .quote-head:after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:#315f4c}
+  .quote-head h1{font-size:28px;margin:0 0 4px;color:#315f4c}
+  .quote-head .muted{font-size:13px;color:#68756f;font-weight:700}
+  .quote-meta{justify-self:start;border:1px solid #d7e0da;border-radius:8px;padding:8px 11px;background:#f8faf8;font-size:10.5px;line-height:1.7;min-width:52mm}
+  .quote-client{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #d7e0da;border-radius:8px;overflow:hidden;margin-bottom:12px;background:#fff;padding:0}
+  .quote-client>div{padding:9px 11px;border-bottom:1px solid #e3e9e5;min-height:15mm}
+  .quote-client>div:nth-child(odd){border-left:1px solid #e3e9e5}
+  .quote-client b{color:#315f4c}
+  h2{font-size:14px;color:#315f4c;margin:12px 0 7px}
+  table{width:100%;border-collapse:collapse;page-break-inside:avoid}
+  th{background:#315f4c;color:#fff;font-size:10px;padding:7px;border:1px solid #315f4c;text-align:right}
+  td{font-size:10px;padding:7px;border:1px solid #d7e0da;vertical-align:top}
+  .quote-single-spec,.quote-items{margin:10px 0 12px;page-break-inside:avoid}
+  .quote-single-spec h2,.quote-items h2{background:#315f4c;color:#fff;margin:0;padding:7px 10px;text-align:center;border-radius:7px 7px 0 0}
+  .quote-totals{width:72mm;margin:10px 0 12px auto;border:1px solid #d7e0da;border-radius:7px;overflow:hidden;page-break-inside:avoid}
+  .quote-totals .r{display:flex;justify-content:space-between;gap:14px;padding:8px 10px;border-bottom:1px solid #d7e0da;font-size:10.5px}
+  .quote-totals .r:last-child{border-bottom:0}
+  .quote-totals .grand{font-size:14px;font-weight:700;color:#315f4c;background:#e9f1eb}
+  .quote-terms{margin-top:10px;page-break-inside:avoid;white-space:normal;line-height:1.6}
+  .quote-terms h2{background:#f0f5f1;border:1px solid #d7e0da;border-bottom:0;margin:0;padding:7px 10px;border-radius:7px 7px 0 0;text-align:center}
+  .quote-services{display:grid;grid-template-columns:1fr 1fr;border:1px solid #d7e0da;border-radius:0 0 7px 7px;overflow:hidden}
+  .quote-service{padding:8px 10px;font-size:10px;border-bottom:1px solid #e3e9e5}
+  .quote-service:nth-child(odd){border-left:1px solid #e3e9e5}
+  .quote-service:nth-last-child(-n+2){border-bottom:0}
+  .quote-terms>table{border:1px solid #d7e0da}
+  .quote-terms:not(:has(table)):not(:has(.quote-services)){border:1px solid #d7e0da;border-radius:7px;padding:10px;font-size:10px}
+  .quote-footer{margin-top:16px;border-top:1px solid #d7e0da;padding-top:10px;text-align:center;color:#68756f;font-size:9px}
+  .muted{color:#68756f}
+  .quote-signatures{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px;page-break-inside:avoid}
+  .quote-signature{border-top:1px solid #7c8881;padding-top:6px;text-align:center;font-size:9px;color:#68756f}
+  @media print{.quote-doc{break-inside:auto} tr{break-inside:avoid} .quote-terms,.quote-totals,.quote-client{break-inside:avoid}}
+  </style></head><body><main class="quote-doc">${body}<div class="quote-signatures"><div class="quote-signature">אישור הלקוח · שם / חתימה / תאריך</div><div class="quote-signature">נגריית משמר העמק · חתימה / תאריך</div></div></main><script>window.onload=function(){setTimeout(function(){window.print()},180)}<\/script></body></html>`;
+  const w=window.open("","_blank");
+  if(!w){alert("הדפדפן חסם את חלון ההדפסה. יש לאפשר חלונות קופצים לאתר ולנסות שוב.");return;}
+  w.document.open();w.document.write(doc);w.document.close();
+}
 
 let purchaseFilter="all";
 let purchaseView="items";
