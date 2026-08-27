@@ -289,7 +289,7 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
 }
 </style>
 </head>
-<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.52</div><div class="nav">
+<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.53</div><div class="nav">
 <button data-v="dashboard" class="active">דשבורד</button><button data-v="projects">פרויקטים</button><button data-v="furniture">כרטיס רהיט</button><button data-v="quotes">הצעות מחיר</button><button data-v="production">ביצוע</button><button data-v="schedule">לו״ז עבודה</button><button data-v="performance">סיכום ביצוע</button><button data-v="purchasing">רכש</button><button data-v="pricebook">מחירון</button><button data-v="settings">הגדרות תהליך</button>
 </div></aside><main>
 
@@ -2720,4 +2720,110 @@ window.previewQuote=previewQuoteV052;
 .v052-master .quote-total-row.grand{background:#e6efd9}
 @media print{#quoteDedicatedPrint .v052-master{width:190mm;min-height:277mm;padding:4mm}}
 </style>
+
+<style id="v053-quote-polish">
+/* v0.53 — final polish for approved quote master */
+.v052-master .quote-print-head{
+  grid-template-columns:58mm 1fr 58mm !important;
+  align-items:start;
+}
+.v052-master .quote-print-title{
+  padding-top:2mm;
+}
+.v052-master .quote-print-title h1{
+  font-size:28px !important;
+  line-height:1.05 !important;
+  margin:0 !important;
+  color:#174f20 !important;
+  font-weight:800 !important;
+  white-space:nowrap;
+}
+.v052-master .quote-print-title .subtitle{
+  display:none !important;
+}
+.v052-master .quote-company{
+  text-align:right !important;
+  padding-top:2mm;
+}
+.v052-master .quote-company h2{
+  font-size:20px !important;
+  line-height:1.1 !important;
+  margin:0 0 5px !important;
+  color:#174f20 !important;
+  white-space:nowrap;
+}
+.v052-master .quote-company > div{
+  font-size:10px !important;
+}
+.v052-master .quote-signatures{
+  grid-template-columns:1fr 1fr !important;
+  gap:5mm !important;
+}
+.v052-master .quote-sign{
+  min-height:24mm;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:4mm;
+  white-space:nowrap;
+}
+.v052-master .quote-sign b{
+  width:100%;
+  text-align:center;
+  margin-bottom:2mm;
+}
+@media print{
+  .v052-master .quote-print-title h1{font-size:25px !important}
+  .v052-master .quote-company h2{font-size:18px !important}
+}
+</style>
+<script id="v053-quote-polish-script">
+(function(){
+  const prevBuild = window.v052BuildDedicatedQuote;
+  if(typeof prevBuild !== "function") return;
+
+  function polish(){
+    const root=document.querySelector("#quoteDedicatedPrint .v052-master");
+    if(!root) return;
+
+    const title=root.querySelector(".quote-print-title h1");
+    if(title) title.textContent="הצעת מחיר";
+
+    const company=root.querySelector(".quote-company h2");
+    if(company) company.textContent="נגריית משמר העמק";
+
+    // Signature fields: keep name, signature and date on one horizontal line.
+    const signs=root.querySelectorAll(".quote-sign");
+    signs.forEach((el,idx)=>{
+      const heading=idx===0 ? "אישור הלקוח" : "נגריית משמר העמק";
+      el.innerHTML='<b>'+heading+'</b><span>שם: ____________</span><span>חתימה: ____________</span><span>תאריך: ____________</span>';
+    });
+  }
+
+  window.v052BuildDedicatedQuote = function(){
+    const ok=prevBuild();
+    if(ok) polish();
+    return ok;
+  };
+
+  window.printQuote = function(){
+    if(!window.v052BuildDedicatedQuote()) return;
+    document.body.classList.add("quote-printing");
+    const cleanup=()=>{
+      document.body.classList.remove("quote-printing");
+      window.removeEventListener("afterprint",cleanup);
+    };
+    window.addEventListener("afterprint",cleanup);
+    setTimeout(()=>window.print(),150);
+  };
+
+  window.previewQuote = function(){
+    if(!window.v052BuildDedicatedQuote()) return;
+    quoteDocument.innerHTML=document.getElementById("quoteDedicatedPrint").innerHTML;
+    quoteEditor.style.display="none";
+    quotePreviewWrap.style.display="block";
+  };
+})();
+</script>
 </body></html>
