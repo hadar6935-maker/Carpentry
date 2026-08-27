@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ניהול נגרייה v0.42</title>
+<title>ניהול נגרייה v0.44</title>
 <style>
 :root{--bg:#f4f6f3;--card:#fff;--text:#1f2923;--muted:#6f7b73;--line:#dde4de;--accent:#355f4b;--soft:#e9f0eb}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
@@ -63,6 +63,7 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
 .purchase-status-select{padding:7px;border:1px solid var(--line);border-radius:7px;background:#fff}
 .purchase-note{min-width:150px;padding:7px;border:1px solid var(--line);border-radius:7px}
 .purchase-done-row{opacity:.7;background:#f5faf6}
+.purchase-group-body{overflow-x:auto}.purchase-group-body table{min-width:1180px}
 
 .install-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
 .install-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
@@ -207,8 +208,8 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
 .purchase-actions button{padding:6px 9px}
 .purchase-ordered{background:#eef3f7}.purchase-partial{background:#fff7e8}.purchase-complete{background:#eef7f0}
 </style></head>
-<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.42</div><div class="nav">
-<button data-v="dashboard" class="active">דשבורד</button><button data-v="projects">פרויקטים</button><button data-v="furniture">כרטיס רהיט</button><button data-v="quotes">הצעות מחיר</button><button data-v="production">ייצור</button><button data-v="installation">התקנה והשלמות</button><button data-v="schedule">לו״ז עבודה</button><button data-v="performance">סיכום ביצוע</button><button data-v="purchasing">רכש</button><button data-v="pricebook">מחירון</button><button data-v="settings">הגדרות תהליך</button>
+<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.44</div><div class="nav">
+<button data-v="dashboard" class="active">דשבורד</button><button data-v="projects">פרויקטים</button><button data-v="furniture">כרטיס רהיט</button><button data-v="quotes">הצעות מחיר</button><button data-v="production">ביצוע</button><button data-v="schedule">לו״ז עבודה</button><button data-v="performance">סיכום ביצוע</button><button data-v="purchasing">רכש</button><button data-v="pricebook">מחירון</button><button data-v="settings">הגדרות תהליך</button>
 </div></aside><main>
 
 
@@ -252,7 +253,7 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
 <div class="panel"><input id="fid" type="hidden"><div class="grid">
 <div class="field"><label>פרויקט</label><select id="fproject"></select></div><div class="field"><label>שם הרהיט</label><input id="fname"></div><div class="field"><label>סוג</label><select id="ftype"><option>מטבח</option><option>ארון</option><option>אמבטיה</option><option>רהיט כללי</option></select></div><div class="field"><label>תאריך יעד לרהיט</label><input id="fdue" type="date"></div><div class="field"><label>מצב ביצוע</label><input id="fexec" readonly value="טרם שוחרר"></div>
 </div></div>
-<div class="panel"><h2>התקדמות</h2><div id="steps" class="stepper"></div></div><div class="panel"><div class="top"><div><h2>מוכנות לייצור</h2><div class="sub">רהיט משתחרר לייצור רק אחרי שסוגרים את בדיקות החובה</div></div><div class="actions no-print"><button id="releaseBtn" class="primary" onclick="releaseToProduction()">שחרר לייצור</button></div></div><div id="readinessState"></div><div id="readinessChecklist" class="checklist"></div><div class="field" style="margin-top:12px"><label>חסם / הערה שמונעת התקדמות</label><textarea id="fblocker" oninput="updateReadinessState()" placeholder="לדוגמה: ממתין לאישור גוון, חסרות מסילות..."></textarea></div></div>
+<div class="panel"><h2>התקדמות</h2><div id="steps" class="stepper"></div></div><div class="panel"><div class="top"><div><h2>מוכנות לביצוע</h2><div class="sub">רהיט משתחרר לביצוע אחרי שסוגרים את בדיקות החובה</div></div><div class="actions no-print"><button id="releaseBtn" class="primary" onclick="releaseToProduction()">שחרר לביצוע</button></div></div><div id="readinessState"></div><div id="readinessChecklist" class="checklist"></div></div>
 <div class="tabs no-print"><button class="active" onclick="tab('calc',this)">מחשבון חומרים</button><button onclick="tab('buy',this)">חומרים ורכש</button><button onclick="tab('notes',this)">הערות</button></div>
 <div id="calc" class="panel tabbody"><div class="top"><h2>מחשבון חומרים</h2><div class="actions no-print"><button class="secondary" onclick="openMaterialPicker()">+ פריט מהמחירון</button><button class="secondary" onclick="addSpecial()">+ פריט מיוחד</button></div></div>
 <div class="note">פריט מיוחד נשמר רק לרהיט הזה. אפשר לסמן אותו להוספה למחירון הקבוע.</div><div id="calcRows" style="margin-top:12px"></div>
@@ -272,7 +273,6 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
   <div class="sum">עלות כוללת<b id="totalCost">₪0</b></div>
   <div class="sum">מחיר מכירה<b id="sell">₪0</b></div>
   <div class="sum">רווח<b id="profit">₪0</b></div>
-  <div class="sum">רווחיות ממחיר המכירה<b id="margin">0%</b></div>
 </div>
 
 <div class="grid" style="margin-top:12px">
@@ -285,7 +285,7 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
     <input id="sellInput" type="number" oninput="recalcFromSell()">
   </div>
 </div></div>
-<div id="buy" class="panel tabbody" style="display:none"><h2>חומרים ורכש</h2><div id="buyRows"></div></div>
+<div id="buy" class="panel tabbody" style="display:none"><h2>חומרים ורכש לרהיט</h2><div class="note">תצוגה ממוקדת של פריטי הרכש של הרהיט הזה. ניהול ההזמנה והאספקה מתבצע במסך רכש המרכזי.</div><div id="buyRows" style="margin-top:12px"></div></div>
 <div id="notes" class="panel tabbody" style="display:none"><h2>הערות</h2><div class="field"><textarea id="fnotes"></textarea></div></div></section>
 
 <section id="quotes" class="view"><div class="top"><div><h1>הצעות מחיר</h1><div class="sub">הצעה אחת יכולה לכלול כמה רהיטים מאותו פרויקט</div></div><div class="actions"><button class="primary" onclick="newQuote()">+ הצעה חדשה</button></div></div>
@@ -300,12 +300,11 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
 </section>
 
 <section id="production" class="view">
-<div class="top"><div><h1>רצפת ייצור</h1><div class="sub">עדכון שלבי העבודה לכל רהיט ששוחרר לייצור</div></div></div>
+<div class="top"><div><h1>ביצוע</h1><div class="sub">כל שלבי הביצוע של הרהיט — מייצור ועד התקנה והשלמות</div></div></div>
 <div class="panel">
   <div class="actions no-print" style="margin-bottom:12px">
     <button class="secondary prod-filter" data-filter="all" onclick="setProdFilter('all')">הכל</button>
     <button class="secondary prod-filter" data-filter="active" onclick="setProdFilter('active')">בתהליך</button>
-    <button class="secondary prod-filter" data-filter="blocked" onclick="setProdFilter('blocked')">תקועים</button>
     <button class="secondary prod-filter" data-filter="done" onclick="setProdFilter('done')">הושלמו</button>
   </div>
   <div id="productionBoard" class="prod-board"></div>
@@ -316,7 +315,7 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
 <div class="top"><div><h1>הגדרות תהליך</h1><div class="sub">כל התהליכים ניתנים לשינוי בלי לגעת בקוד</div></div></div>
 
 <div class="panel">
-  <div class="settings-tabs"><button onclick="settingsTab('generalSettings')">תהליך כללי</button><button onclick="settingsTab('productionSettings')">ייצור</button><button onclick="settingsTab('purchaseSettings')">רכש</button><button onclick="settingsTab('installationSettings')">התקנה</button></div>
+  <div class="settings-tabs"><button onclick="settingsTab('generalSettings')">תהליך כללי</button><button onclick="settingsTab('productionSettings')">ביצוע</button><button onclick="settingsTab('purchaseSettings')">רכש</button></div>
 
   <div id="generalSettings" class="settings-pane">
     <div class="top"><h2>שלבי התהליך הכללי</h2><button class="primary" onclick="addProcessStep()">+ שלב</button></div>
@@ -327,13 +326,13 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
   </div>
 
   <div id="productionSettings" class="settings-pane" style="display:none">
-    <div class="top"><div><h2>שלבי ייצור</h2><div class="sub">השינוי יחול אוטומטית על רהיטים שישוחררו לייצור מעכשיו</div></div><button class="primary" onclick="addProductionStepSetting()">+ שלב ייצור</button></div>
+    <div class="top"><div><h2>שלבי ביצוע</h2><div class="sub">רשימה אחת רציפה מייצור ועד התקנה. אפשר להוסיף, למחוק, לשנות שם ולשנות סדר.</div></div><button class="primary" onclick="addProductionStepSetting()">+ שלב ביצוע</button></div>
     <div id="productionStepEditor"></div>
-    <div class="actions" style="margin-top:12px"><button class="primary" onclick="saveProductionSettings()">שמור שלבי ייצור</button></div>
-    <div class="note" style="margin-top:12px">רהיט שכבר שוחרר לייצור שומר Snapshot של השלבים שלו. אפשר לעדכן אותו ידנית לתהליך החדש מתוך כרטיס הייצור.</div>
+    <div class="actions" style="margin-top:12px"><button class="primary" onclick="saveProductionSettings()">שמור שלבי ביצוע</button></div>
+    <div class="note" style="margin-top:12px">רהיט שכבר שוחרר לביצוע שומר Snapshot של השלבים שלו. אפשר לעדכן אותו ידנית לתהליך החדש מתוך מסך הביצוע.</div>
   </div>
   <div id="purchaseSettings" class="settings-pane" style="display:none"><div class="top"><div><h2>שלבי רכש</h2><div class="sub">אפשר להוסיף, למחוק ולשנות סדר.</div></div><button class="primary" onclick="addAreaStep('purchaseStepEditor')">+ שלב רכש</button></div><div id="purchaseStepEditor"></div><div class="actions" style="margin-top:12px"><button class="primary" onclick="saveAreaSteps('purchaseSteps','purchaseStepEditor')">שמור שלבי רכש</button></div></div>
-  <div id="installationSettings" class="settings-pane" style="display:none"><div class="top"><div><h2>שלבי התקנה והשלמות</h2><div class="sub">אפשר להוסיף, למחוק ולשנות סדר.</div></div><button class="primary" onclick="addAreaStep('installationStepEditor')">+ שלב התקנה</button></div><div id="installationStepEditor"></div><div class="actions" style="margin-top:12px"><button class="primary" onclick="saveAreaSteps('installationSteps','installationStepEditor')">שמור שלבי התקנה</button></div></div>
+</div><button class="primary" onclick="addAreaStep('installationStepEditor')">+ שלב התקנה</button></div><div id="installationStepEditor"></div><div class="actions" style="margin-top:12px"><button class="primary" onclick="saveAreaSteps('installationSteps','installationStepEditor')">שמור שלבי התקנה</button></div></div>
 </div>
 </section>
 
@@ -442,12 +441,29 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
 
 </main></div>
 <script>
-const KEY="nagria03";const DEFAULT_STEPS=["תכנון","אישור","חומרים","ייצור","גמר","מוכן להתקנה","התקנה","הושלם"];const DEFAULT_CHECKS=[{id:"measure",label:"מידות סופיות אושרו",required:true},{id:"plan",label:"תוכנית סופית מוכנה",required:true},{id:"body",label:"חומר גוף הוגדר",required:true},{id:"front",label:"חזית הוגדרה",required:true},{id:"color",label:"גוון / צבע אושר",required:false},{id:"hardware",label:"פרזול הוגדר",required:true},{id:"special",label:"חומרים מיוחדים סגורים",required:false},{id:"purchase",label:"כל החוסרים הועברו לרכש",required:true},{id:"critical",label:"כל החומרים הקריטיים הגיעו",required:true}];const DEFAULT_PRODUCTION_STEPS=["חיתוך","קנטים","קידוחים / CNC","הרכבה","חזיתות / גמר","בקרת איכות","מוכן להתקנה"];
+const KEY="nagria03";const DEFAULT_STEPS=["תכנון","אישור","חומרים","ייצור","גמר","מוכן להתקנה","התקנה","הושלם"];const DEFAULT_CHECKS=[{id:"measure",label:"מידות סופיות אושרו",required:true},{id:"plan",label:"תוכנית סופית מוכנה",required:true},{id:"body",label:"חומר גוף הוגדר",required:true},{id:"front",label:"חזית הוגדרה",required:true},{id:"color",label:"גוון / צבע אושר",required:false},{id:"hardware",label:"פרזול הוגדר",required:true},{id:"special",label:"חומרים מיוחדים סגורים",required:false},{id:"purchase",label:"כל החוסרים הועברו לרכש",required:true},{id:"critical",label:"כל החומרים הקריטיים הגיעו",required:true}];const DEFAULT_PRODUCTION_STEPS=["חיתוך","קנטים","קידוחים / CNC","הרכבה","חזיתות / גמר","בקרת איכות","הובלה","התקנה","השלמות","הושלם"];
 let db=JSON.parse(localStorage.getItem(KEY)||'{"projects":[],"furniture":[],"quotes":[],"pricebook":[{"name":"סנדוויץ 17","unit":"פלטה","price":220},{"name":"MDF 17","unit":"פלטה","price":160},{"name":"ציר Blum","unit":"יח","price":18}]}');if(!db.settings)db.settings={steps:DEFAULT_STEPS.slice(),readiness:DEFAULT_CHECKS.map(x=>({...x}))};if(!db.settings.steps?.length)db.settings.steps=DEFAULT_STEPS.slice();if(!db.settings.readiness?.length)db.settings.readiness=DEFAULT_CHECKS.map(x=>({...x}));
 if(!db.settings.productionSteps?.length)db.settings.productionSteps=DEFAULT_PRODUCTION_STEPS.slice();
 if(!db.settings.purchaseSteps?.length)db.settings.purchaseSteps=["להזמנה","הוזמן","הושלם"];
 if(!db.settings.installationSteps?.length)db.settings.installationSteps=["מוכן להתקנה","מתואם","השלמות פתוחות","סגור"];
 if(!db.purchase)db.purchase={};
+// v0.44 migration: unify production + installation into one editable execution flow.
+if(!db.migratedV044){
+  db.furniture.forEach(f=>{
+    if(f.execStatus==="שוחרר לייצור")f.execStatus="שוחרר לביצוע";
+    if(Array.isArray(f.productionStages)&&f.productionStages.length){
+      const tail=["הובלה","התקנה","השלמות","הושלם"];
+      tail.forEach(name=>{if(!f.productionStages.some(s=>s.name===name))f.productionStages.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,status:"לא התחיל",worker:"",workerIds:[],start:"",end:"",durationDays:1,note:""})});
+      f.productionStages.forEach(st=>{delete st.blocked;if(st.status==="תקוע")st.status="בתהליך"});
+    }
+    delete f.blocker;
+  });
+  const old=db.settings.productionSteps||[];
+  ["הובלה","התקנה","השלמות","הושלם"].forEach(name=>{if(!old.includes(name))old.push(name)});
+  db.settings.productionSteps=old.length?old:DEFAULT_PRODUCTION_STEPS.slice();
+  db.migratedV044=true;
+  localStorage.setItem(KEY,JSON.stringify(db));
+}
 const PRICEBOOK_V13=[{"code":"1001","category":"חומר גלם","subCategory":"שעות עבודה","name":"פרטי","thickness":"שעה","unit":"שעה","price":76.2,"supplier":"","notes":"ללא מע\"מ","updated":""},{"code":"1002","category":"חומר גלם","subCategory":"שעות עבודה","name":"מוסדי","thickness":"שעה","unit":"שעה","price":101.6,"supplier":"","notes":"ללא מע\"מ","updated":""},{"code":"1003","category":"חומר גלם","subCategory":"שעות עבודה","name":"תמה","thickness":"שעה","unit":"שעה","price":114.4,"supplier":"","notes":"ללא מע\"מ","updated":""},{"code":"1004","category":"חומר גלם","subCategory":"מיוחדים","name":"עבודות מיוחדות","thickness":"שקל","unit":"שקל","price":1.0,"supplier":"","notes":"ללא מע\"מ","updated":""},{"code":"1005","category":"חומר גלם","subCategory":"לאמי","name":"אורן","thickness":"18","unit":"","price":213.0,"supplier":"","notes":"","updated":""},{"code":"1006","category":"חומר גלם","subCategory":"לאמי","name":"אורן","thickness":"20","unit":"","price":265.0,"supplier":"","notes":"","updated":""},{"code":"1007","category":"חומר גלם","subCategory":"לאמי","name":"אורן","thickness":"28","unit":"","price":350.0,"supplier":"","notes":"ארזי רז","updated":""},{"code":"1008","category":"חומר גלם","subCategory":"לאמי","name":"אורן","thickness":"40","unit":"","price":0,"supplier":"","notes":"","updated":""},{"code":"1009","category":"חומר גלם","subCategory":"לאמי","name":"אלון","thickness":"20","unit":"","price":900.0,"supplier":"","notes":"100X300 עלי","updated":""},{"code":"1010","category":"חומר גלם","subCategory":"לאמי","name":"אלון","thickness":"40","unit":"","price":1975.0,"supplier":"","notes":"בלורן 100X300","updated":""},{"code":"1011","category":"חומר גלם","subCategory":"בוצ'ר","name":"אלון","thickness":"20","unit":"","price":265.0,"supplier":"","notes":"","updated":""},{"code":"1012","category":"חומר גלם","subCategory":"בוצ'ר","name":"אלון","thickness":"40","unit":"","price":460.0,"supplier":"","notes":"","updated":""},{"code":"1013","category":"חומר גלם","subCategory":"לאמי","name":"אלון","thickness":"40","unit":"","price":550.0,"supplier":"","notes":"למ\"ר","updated":""},{"code":"1014","category":"חומר גלם","subCategory":"לאמי","name":"אלון AB","thickness":"40","unit":"","price":610.0,"supplier":"","notes":"","updated":""},{"code":"1015","category":"חומר גלם","subCategory":"עצים","name":"אורן מוקצה","thickness":"5X10","unit":"","price":10.25,"supplier":"","notes":"","updated":""},{"code":"1016","category":"חומר גלם","subCategory":"עצים","name":"אורן סוכות","thickness":"25X100","unit":"","price":4.6,"supplier":"","notes":"","updated":""},{"code":"1017","category":"חומר גלם","subCategory":"עצים","name":"אורן מוקצה","thickness":"26X169","unit":"","price":9.1,"supplier":"","notes":"","updated":""},{"code":"1018","category":"חומר גלם","subCategory":"עצים","name":"אורן מוקצה ומחוטא","thickness":"5X10","unit":"","price":10.65,"supplier":"","notes":"","updated":""},{"code":"1019","category":"חומר גלם","subCategory":"פורמייקה","name":"גב לבן מבריק","thickness":"","unit":"","price":25.0,"supplier":"","notes":"","updated":""},{"code":"1020","category":"חומר גלם","subCategory":"פורמייקה","name":"ארפה סטנדרט","thickness":"","unit":"","price":166.0,"supplier":"","notes":"","updated":""},{"code":"1021","category":"חומר גלם","subCategory":"פורמייקה","name":"סוקל נירוסטה","thickness":"","unit":"","price":108.0,"supplier":"","notes":"","updated":""},{"code":"1022","category":"חומר גלם","subCategory":"פורניר","name":"אלון לבן","thickness":"122X244","unit":"","price":222.0,"supplier":"","notes":"","updated":""},{"code":"1023","category":"חומר גלם","subCategory":"סנדביץ'","name":"גלוי","thickness":"4","unit":"","price":0,"supplier":"","notes":"","updated":""},{"code":"1024","category":"חומר גלם","subCategory":"סנדביץ'","name":"גלוי","thickness":"6","unit":"","price":0,"supplier":"","notes":"","updated":""},{"code":"1025","category":"חומר גלם","subCategory":"סנדביץ'","name":"גלוי","thickness":"8","unit":"","price":63.0,"supplier":"","notes":"","updated":""},{"code":"1026","category":"חומר גלם","subCategory":"סנדביץ'","name":"גלוי","thickness":"10","unit":"","price":0,"supplier":"","notes":"","updated":""},{"code":"1027","category":"חומר גלם","subCategory":"סנדביץ'","name":"גלוי","thickness":"12","unit":"","price":86.0,"supplier":"","notes":"","updated":""},{"code":"1028","category":"חומר גלם","subCategory":"סנדביץ'","name":"גלוי","thickness":"14","unit":"","price":0,"supplier":"","notes":"","updated":""},{"code":"1029","category":"חומר גלם","subCategory":"סנדביץ'","name":"גלוי","thickness":"16","unit":"","price":98.0,"supplier":"","notes":"","updated":""},{"code":"1030","category":"חומר גלם","subCategory":"סנדביץ'","name":"גלוי","thickness":"18","unit":"","price":0,"supplier":"","notes":"","updated":""},{"code":"1031","category":"חומר גלם","subCategory":"סנדביץ'","name":"גלוי","thickness":"20","unit":"","price":130.0,"supplier":"","notes":"","updated":""},{"code":"1032","category":"חומר גלם","subCategory":"MDF","name":"גב/ארפה","thickness":"19","unit":"","price":400.0,"supplier":"","notes":"כולל זמן עבודה בפרס","updated":""},{"code":"1033","category":"חומר גלם","subCategory":"MDF","name":"ירוק גלוי","thickness":"12","unit":"","price":0,"supplier":"","notes":"","updated":""},{"code":"1034","category":"חומר גלם","subCategory":"MDF","name":"ירוק גלוי","thickness":"17","unit":"","price":84.0,"supplier":"","notes":"מחיר למשטח","updated":""},{"code":"1035","category":"חומר גלם","subCategory":"MDF","name":"ירוק גלוי","thickness":"20","unit":"","price":0,"supplier":"","notes":"","updated":""},{"code":"1036","category":"חומר גלם","subCategory":"MDF","name":"אלון מבוקע/אלון מבוקע","thickness":"19","unit":"","price":286.0,"supplier":"","notes":"","updated":""},{"code":"1037","category":"חומר גלם","subCategory":"MDF","name":"אלון מבוקע/אלון מבוקע","thickness":"28","unit":"","price":335.0,"supplier":"","notes":"","updated":""},{"code":"1038","category":"חומר גלם","subCategory":"סנדביץ'","name":"בלורן למטבחים","thickness":"16","unit":"","price":110.0,"supplier":"","notes":"מחיר למשטח","updated":""},{"code":"1039","category":"חומר גלם","subCategory":"סנדביץ'","name":"גב מטבחים בלורן","thickness":"5","unit":"","price":60.0,"supplier":"","notes":"","updated":""},{"code":"1040","category":"חומר גלם","subCategory":"מזונית","name":"גב רוחב 122","thickness":"4","unit":"","price":35.0,"supplier":"","notes":"","updated":""},{"code":"1041","category":"חומר גלם","subCategory":"מזונית","name":"גב רוחב 84","thickness":"4","unit":"","price":25.0,"supplier":"","notes":"","updated":""},{"code":"1042","category":"חומר גלם","subCategory":"מלמין","name":"ג'ומר לבן","thickness":"16.5","unit":"","price":89.0,"supplier":"","notes":"מחיר למשטח","updated":""},{"code":"1043","category":"חומר גלם","subCategory":"בירץ'","name":"בירץ' לבנה","thickness":"10","unit":"","price":83.0,"supplier":"","notes":"","updated":""},{"code":"1044","category":"חומר גלם","subCategory":"בירץ'","name":"בירץ' לבנה","thickness":"16","unit":"","price":134.0,"supplier":"","notes":"","updated":""},{"code":"1045","category":"חומר גלם","subCategory":"בירץ'","name":"בירץ' לבנה","thickness":"18","unit":"","price":146.0,"supplier":"","notes":"","updated":""},{"code":"1046","category":"חומר גלם","subCategory":"בירץ'","name":"בירץ' לבנה","thickness":"20","unit":"","price":176.0,"supplier":"","notes":"","updated":""},{"code":"1047","category":"חומר גלם","subCategory":"OSB","name":"OSB","thickness":"17","unit":"","price":79.0,"supplier":"","notes":"","updated":""},{"code":"1048","category":"חומר גלם","subCategory":"קאנט","name":"כל קאנט","thickness":"למטר","unit":"","price":3.0,"supplier":"","notes":"","updated":""},{"code":"1049","category":"חומר גלם","subCategory":"קאנט","name":"קאנט פורניר","thickness":"למטר","unit":"","price":4.0,"supplier":"","notes":"","updated":""},{"code":"1050","category":"חומר גלם","subCategory":"עצים","name":"נוטפדר 10ס\"מ","thickness":"למטר","unit":"","price":5.8,"supplier":"","notes":"מגיע באורך 4.8 מטר","updated":""},{"code":"1051","category":"חומר גלם","subCategory":"עצים","name":"אורן מוקצה ומחוטא","thickness":"14.2X3.4","unit":"","price":12.8,"supplier":"","notes":"","updated":""},{"code":"1052","category":"חומר גלם","subCategory":"פורמייקה/פורניר","name":"משולש אלון לבן נקי","thickness":"גיליון","unit":"","price":180.0,"supplier":"","notes":"עלי","updated":""},{"code":"1053","category":"חומר גלם","subCategory":"MDF","name":"ירוק יצוק","thickness":"19","unit":"","price":130.0,"supplier":"","notes":"","updated":""},{"code":"1054","category":"חומר גלם","subCategory":"MDF","name":"ירוק יצוק","thickness":"21","unit":"","price":160.0,"supplier":"","notes":"","updated":""},{"code":"1055","category":"חומר גלם","subCategory":"MDF","name":"אלון מבוקע/גבון","thickness":"17","unit":"","price":230.0,"supplier":"","notes":"עלי","updated":""},{"code":"1056","category":"חומר גלם","subCategory":"MDF","name":"אלון מבוקע/גבון","thickness":"12","unit":"","price":200.0,"supplier":"","notes":"עלי","updated":""},{"code":"1057","category":"אחר","subCategory":"מראה","name":"50*50 ללא מסגרת","thickness":"6","unit":"","price":70.0,"supplier":"","notes":"","updated":""},{"code":"1058","category":"חומר גלם","subCategory":"סיבית ירוקה","name":"מידות פלטה 207*280","thickness":"16","unit":"","price":447.0,"supplier":"","notes":"בלורן","updated":""},{"code":"1059","category":"חומר גלם","subCategory":"לאמי","name":"אלון מבוקע","thickness":"40","unit":"","price":1843.0,"supplier":"","notes":"100X300 בלורן","updated":""},{"code":"1060","category":"חומר גלם","subCategory":"בירץ'","name":"בירץ' לבנה BB/CP","thickness":"21","unit":"","price":210.0,"supplier":"","notes":"ארזי רז","updated":""},{"code":"1061","category":"חומר גלם","subCategory":"בירץ'","name":"בירץ' לבנה BB/CP","thickness":"9","unit":"","price":185.0,"supplier":"","notes":"ארזי רז","updated":""},{"code":"1062","category":"חומר גלם","subCategory":"MDF","name":"אלון אירופאי שטרייף KV01","thickness":"19","unit":"","price":848.0,"supplier":"","notes":"בלורן 280*207","updated":""},{"code":"1063","category":"חומר גלם","subCategory":"MDF","name":"אלון אירופאי מיקס KV02","thickness":"19","unit":"","price":848.0,"supplier":"","notes":"בלורן 280*207","updated":""},{"code":"1064","category":"חומר גלם","subCategory":"MDF","name":"אלון אירופאי פרח KV03","thickness":"19","unit":"","price":848.0,"supplier":"","notes":"בלורן 280*207","updated":""},{"code":"1065","category":"חומר גלם","subCategory":"MDF","name":"אלון עתיק מבוקע KV10","thickness":"19","unit":"","price":2961.0,"supplier":"","notes":"בלורן 280*207","updated":""},{"code":"1066","category":"חומר גלם","subCategory":"MDF","name":"אלון וולקנו מיקס מוברש KV 14","thickness":"19","unit":"","price":3387.0,"supplier":"","notes":"בלורן 280*207","updated":""},{"code":"1067","category":"חומר גלם","subCategory":"MDF","name":"אלון עיניים מוברש KV 15","thickness":"19","unit":"","price":2961.0,"supplier":"","notes":"בלורן 280*207","updated":""},{"code":"1068","category":"חומר גלם","subCategory":"MDF","name":"טרקוטה מט","thickness":"19","unit":"","price":650.0,"supplier":"","notes":"דומיסיל 278*124","updated":""},{"code":"1069","category":"חומר גלם","subCategory":"מלמין","name":"סיבית עם ציפוי","thickness":"28","unit":"","price":210.0,"supplier":"","notes":"","updated":""},{"code":"1070","category":"חומר גלם","subCategory":"סנדביץ'","name":"פורניר אלון לבן פרח/אלון לבן פרח","thickness":"20","unit":"","price":490.0,"supplier":"","notes":"ארזי רז","updated":""},{"code":"1071","category":"חומר גלם","subCategory":"MDF","name":"בירמן 3106/גב מודבק","thickness":"19","unit":"","price":190.0,"supplier":"","notes":"בירמן","updated":""},{"code":"1072","category":"חומר גלם","subCategory":"MDF","name":"צבע 6 שכבות 280*122","thickness":"18","unit":"","price":320.0,"supplier":"","notes":"פורמקס","updated":""},{"code":"1073","category":"חומר גלם","subCategory":"MDF","name":"שחור 305*122","thickness":"16","unit":"","price":334.0,"supplier":"","notes":"בלורן","updated":""},{"code":"1074","category":"חומר גלם","subCategory":"פורניר","name":"אלון עורב שחור DV01 מידה 280*122","thickness":"","unit":"","price":1530.0,"supplier":"","notes":"בלורן","updated":""},{"code":"2001","category":"פרזול","subCategory":"מתכלים","name":"דופלו","thickness":"לאחד","unit":"","price":0.042,"supplier":"","notes":"","updated":""},{"code":"2002","category":"פרזול","subCategory":"מתכלים","name":"בורג יורו","thickness":"לאחד","unit":"","price":0.075,"supplier":"","notes":"","updated":""},{"code":"2003","category":"פרזול","subCategory":"מתכלים","name":"דבק לבן","thickness":"5 ליטר","unit":"","price":85.0,"supplier":"","notes":"","updated":""},{"code":"2004","category":"פרזול","subCategory":"מגירה","name":"מטאבוקס 55 גבוה","thickness":"למגירה בכל הגדלים","unit":"","price":67.0,"supplier":"","notes":"בלום","updated":""},{"code":"2005","category":"פרזול","subCategory":"מגירה","name":"מריובוקס נמוך 55","thickness":"רק פרזול","unit":"","price":200.0,"supplier":"","notes":"בלום","updated":""},{"code":"2006","category":"פרזול","subCategory":"מגירה","name":"מריובוקס גבוהה 55","thickness":"רק פרזול","unit":"","price":250.0,"supplier":"","notes":"בלום","updated":""},{"code":"2007","category":"פרזול","subCategory":"מגירה","name":"מריובוקס גבוהה זכוכית 55","thickness":"רק פרזול","unit":"","price":270.0,"supplier":"","notes":"בלום","updated":""},{"code":"2008","category":"פרזול","subCategory":"מגירה","name":"טנדם 55","thickness":"רק פרזול","unit":"","price":100.0,"supplier":"","notes":"בלום","updated":""},{"code":"2009","category":"פרזול","subCategory":"צירים","name":"ישר","thickness":"","unit":"","price":11.0,"supplier":"","notes":"בלום","updated":""},{"code":"2010","category":"פרזול","subCategory":"צירים","name":"כפוף","thickness":"","unit":"","price":13.0,"supplier":"","notes":"בלום","updated":""},{"code":"2011","category":"פרזול","subCategory":"צירים","name":"ישר בלומושן","thickness":"","unit":"","price":8.9,"supplier":"","notes":"בלום","updated":""},{"code":"2012","category":"פרזול","subCategory":"צירים","name":"כפוף בלומושן","thickness":"","unit":"","price":19.0,"supplier":"","notes":"בלום","updated":""},{"code":"2013","category":"פרזול","subCategory":"צירים","name":"תושבת","thickness":"","unit":"","price":2.1,"supplier":"","notes":"בלום","updated":""},{"code":"2014","category":"פרזול","subCategory":"קלאפה","name":"קלאפה מיקרו דומיסיל","thickness":"","unit":"","price":128.0,"supplier":"","notes":"דומיסיל","updated":""},{"code":"2015","category":"פרזול","subCategory":"קלאפה","name":"קלאפה מיקרו בלום","thickness":"","unit":"","price":426.0,"supplier":"","notes":"בלום","updated":""},{"code":"2016","category":"פרזול","subCategory":"קלאפה","name":"קלאפה HK","thickness":"","unit":"","price":210.0,"supplier":"","notes":"בלום","updated":""},{"code":"2017","category":"פרזול","subCategory":"מתכלים","name":"רגל 10 ס\"מ + תושבת","thickness":"","unit":"","price":2.08,"supplier":"","notes":"","updated":""},{"code":"2018","category":"פרזול","subCategory":"מתכלים","name":"ידית","thickness":"96 מ\"מ","unit":"","price":10.0,"supplier":"","notes":"","updated":""},{"code":"2019","category":"פרזול","subCategory":"מגירה","name":"טנדם 60","thickness":"רק פרזול","unit":"","price":120.0,"supplier":"","notes":"בלום","updated":""},{"code":"2020","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה M 40 ק\"ג","unit":"","price":215.54,"supplier":"","notes":"בלום","updated":""},{"code":"2021","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה M 70 ק\"ג","unit":"","price":250.1,"supplier":"","notes":"בלום","updated":""},{"code":"2022","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה E גלריה 40 ק\"ג","unit":"","price":257.28,"supplier":"","notes":"בלום","updated":""},{"code":"2023","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה E גלריה 70 ק\"ג","unit":"","price":291.84,"supplier":"","notes":"בלום","updated":""},{"code":"2024","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה E דופן מתכת 40 ק\"ג","unit":"","price":309.2,"supplier":"","notes":"בלום","updated":""},{"code":"2025","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה E דופן מתכת 70 ק\"ג","unit":"","price":343.76,"supplier":"","notes":"בלום","updated":""},{"code":"2026","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה E דופן זכוכית 40 ק\"ג","unit":"","price":274.52,"supplier":"","notes":"בלום","updated":""},{"code":"2027","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה E דופן זכוכית 70 ק\"ג","unit":"","price":309.08,"supplier":"","notes":"בלום","updated":""},{"code":"2028","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה E דופן זכוכית עם חיזוק 40 ק\"ג","unit":"","price":307.62,"supplier":"","notes":"בלום","updated":""},{"code":"2029","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה E דופן זכוכית עם חיזוק 70 ק\"ג","unit":"","price":342.18,"supplier":"","notes":"בלום","updated":""},{"code":"2030","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה E PURE 40 ק\"ג","unit":"","price":309.33,"supplier":"","notes":"בלום","updated":""},{"code":"2031","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה E PURE 70 ק\"ג","unit":"","price":343.89,"supplier":"","notes":"בלום","updated":""},{"code":"2032","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה K 40 ק\"ג","unit":"","price":263.01,"supplier":"","notes":"בלום","updated":""},{"code":"2033","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה K 70 ק\"ג","unit":"","price":297.57,"supplier":"","notes":"בלום","updated":""},{"code":"2034","category":"פרזול","subCategory":"מגירה","name":"מריובוקס 55 ס\"מ","thickness":"גובה N 40 ק\"ג","unit":"","price":249.97,"supplier":"","notes":"בלום","updated":""},{"code":"2035","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"גובה M 40 ק\"ג","unit":"","price":232.49,"supplier":"","notes":"בלום","updated":""},{"code":"2036","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"גובה M 70 ק\"ג","unit":"","price":264.21,"supplier":"","notes":"בלום","updated":""},{"code":"2037","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"גובה K 40 ק\"ג","unit":"","price":298.57,"supplier":"","notes":"בלום","updated":""},{"code":"2038","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"גובה K 70 ק\"ג","unit":"","price":330.29,"supplier":"","notes":"בלום","updated":""},{"code":"2039","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"גובה PURE C 40 ק\"ג","unit":"","price":343.32,"supplier":"","notes":"בלום","updated":""},{"code":"2040","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"גובה PURE C 70 ק\"ג","unit":"","price":375.04,"supplier":"","notes":"בלום","updated":""},{"code":"2041","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"גובה FREE C 40 ק\"ג","unit":"","price":344.06,"supplier":"","notes":"בלום","updated":""},{"code":"2042","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"גובה FREE C 70 ק\"ג","unit":"","price":368.74,"supplier":"","notes":"בלום","updated":""},{"code":"2043","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"דפנות הגבהה זכוכית שקופה","unit":"","price":24.19,"supplier":"","notes":"בלום","updated":""},{"code":"2044","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"דופן הגבהה אפור אנטיסן","unit":"","price":30.24,"supplier":"","notes":"בלום","updated":""},{"code":"2045","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"גובה F 40 ק\"ג","unit":"","price":449.26,"supplier":"","notes":"בלום","updated":""},{"code":"2046","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 55 ס\"מ","thickness":"גובה F 70 ק\"ג","unit":"","price":480.98,"supplier":"","notes":"בלום","updated":""},{"code":"2047","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 65 ס\"מ","thickness":"גובה M 70 ק\"ג","unit":"","price":326.68,"supplier":"","notes":"בלום","updated":""},{"code":"2048","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 65 ס\"מ","thickness":"גובה PURE C 70 ק\"ג","unit":"","price":431.68,"supplier":"","notes":"בלום","updated":""},{"code":"2049","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 65 ס\"מ","thickness":"גובה FREE C 70 ק\"ג","unit":"","price":430.79,"supplier":"","notes":"בלום","updated":""},{"code":"2050","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 65 ס\"מ","thickness":"דופן הגבהה אפור אנטיסן","unit":"","price":37.63,"supplier":"","notes":"בלום","updated":""},{"code":"2051","category":"פרזול","subCategory":"מגירה","name":"לגראבוקס 65 ס\"מ","thickness":"גובה F 70 ק\"ג","unit":"","price":573.29,"supplier":"","notes":"בלום","updated":""},{"code":"2052","category":"פרזול","subCategory":"מגירה","name":"מטאבוקס 55 ס\"מ","thickness":"תוספת טריקה שקטה","unit":"","price":16.08,"supplier":"","notes":"בלום","updated":""},{"code":"2053","category":"פרזול","subCategory":"מגירה","name":"מטאבוקס 55 ס\"מ","thickness":"גובה M קרם","unit":"","price":41.37,"supplier":"","notes":"בלום","updated":""},{"code":"2054","category":"פרזול","subCategory":"מגירה","name":"מטאבוקס 55 ס\"מ","thickness":"גובה K קרם","unit":"","price":52.77,"supplier":"","notes":"בלום","updated":""},{"code":"2055","category":"פרזול","subCategory":"מגירה","name":"מטאבוקס 55 ס\"מ","thickness":"גובה N + פרונט קרם","unit":"","price":63.94,"supplier":"","notes":"בלום","updated":""},{"code":"2056","category":"פרזול","subCategory":"מגירה","name":"מטאבוקס 55 ס\"מ","thickness":"גובה H קרם","unit":"","price":59.41,"supplier":"","notes":"בלום","updated":""},{"code":"2057","category":"פרזול","subCategory":"מגירה","name":"טנדם 55 ס\"מ","thickness":"שליפה רגילה","unit":"","price":51.48,"supplier":"","notes":"בלום","updated":""},{"code":"2058","category":"פרזול","subCategory":"מגירה","name":"טנדם 55 ס\"מ","thickness":"שליפה כפולה","unit":"","price":92.64,"supplier":"","notes":"בלום","updated":""},{"code":"2059","category":"פרזול","subCategory":"מגירה","name":"טנדם 55 ס\"מ","thickness":"זוג מתאמים","unit":"","price":6.32,"supplier":"","notes":"בלום","updated":""},{"code":"2060","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK","thickness":"2300","unit":"","price":195.46,"supplier":"","notes":"בלום","updated":""},{"code":"2061","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK","thickness":"2500","unit":"","price":195.46,"supplier":"","notes":"בלום","updated":""},{"code":"2062","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK","thickness":"2700","unit":"","price":199.7,"supplier":"","notes":"בלום","updated":""},{"code":"2063","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK","thickness":"2900","unit":"","price":291.43,"supplier":"","notes":"בלום","updated":""},{"code":"2064","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK Top","thickness":"2300","unit":"","price":241.38,"supplier":"","notes":"בלום","updated":""},{"code":"2065","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK Top","thickness":"2500","unit":"","price":241.38,"supplier":"","notes":"בלום","updated":""},{"code":"2066","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK Top","thickness":"2700","unit":"","price":241.38,"supplier":"","notes":"בלום","updated":""},{"code":"2067","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK Top","thickness":"2900","unit":"","price":276.72,"supplier":"","notes":"בלום","updated":""},{"code":"2068","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HL 2500","thickness":"יח' 60 מנג' גובה 400-550 לבן","unit":"","price":395.64,"supplier":"","notes":"בלום","updated":""},{"code":"2069","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HL 2500","thickness":"יח' 60 מנג' גובה 450-580 לבן","unit":"","price":419.31,"supplier":"","notes":"בלום","updated":""},{"code":"2070","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HL 2700","thickness":"יח' 60 מנג' גובה 450-580 לבן","unit":"","price":432.23,"supplier":"","notes":"בלום","updated":""},{"code":"2071","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HL 2500","thickness":"יח' 90 מנג' גובה 400-550 לבן","unit":"","price":408.64,"supplier":"","notes":"בלום","updated":""},{"code":"2072","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HL 2700","thickness":"יח' 90 מנג' גובה 400-550 לבן","unit":"","price":421.56,"supplier":"","notes":"בלום","updated":""},{"code":"2073","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HL 2700","thickness":"יח' 90 מנג' גובה 450-580 לבן","unit":"","price":445.22,"supplier":"","notes":"בלום","updated":""},{"code":"2074","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HL Top","thickness":"יח' 60 גובה 390-540 אפור","unit":"","price":452.74,"supplier":"","notes":"בלום","updated":""},{"code":"2075","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HL Top","thickness":"יח' 60 גובה 480-580 אפור","unit":"","price":469.18,"supplier":"","notes":"בלום","updated":""},{"code":"2076","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HL Top","thickness":"יח' 90 גובה 390-540 אפור","unit":"","price":469.18,"supplier":"","notes":"בלום","updated":""},{"code":"2077","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HL Top","thickness":"יח' 90 גובה 480-580 אפור","unit":"","price":485.61,"supplier":"","notes":"בלום","updated":""},{"code":"2078","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK-S","thickness":"בלומושן","unit":"","price":118.24,"supplier":"","notes":"בלום","updated":""},{"code":"2079","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK-XS","thickness":"נתון כוח 500-1500 סט + מתאמים","unit":"","price":54.05,"supplier":"","notes":"בלום","updated":""},{"code":"2080","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK-XS","thickness":"נתון כוח 800-1800 סט + מתאמים","unit":"","price":54.05,"supplier":"","notes":"בלום","updated":""},{"code":"2081","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK-XS","thickness":"נתון כוח 1000-3000 סט + מתאמים","unit":"","price":108.11,"supplier":"","notes":"בלום","updated":""},{"code":"2082","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HK-XS","thickness":"נתון כוח 1600-3600 סט + מתאמים","unit":"","price":108.11,"supplier":"","notes":"בלום","updated":""},{"code":"2083","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HS top","thickness":"שבלונה סט מנגנון 2200 - לבן","unit":"","price":509.23,"supplier":"","notes":"בלום","updated":""},{"code":"2084","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HS top","thickness":"שבלונה סט מנגנון 2500 - לבן","unit":"","price":528.4,"supplier":"","notes":"בלום","updated":""},{"code":"2085","category":"פרזול","subCategory":"קלאפה","name":"אוונטוס HS top","thickness":"שבלונה סט מנגנון 2800 - לבן","unit":"","price":547.58,"supplier":"","notes":"בלום","updated":""},{"code":"2086","category":"פרזול","subCategory":"ציר","name":"בלומושן 110 ישר","thickness":"קליפ-טופ אינסרטה","unit":"","price":8.9,"supplier":"","notes":"בלום","updated":""},{"code":"2087","category":"פרזול","subCategory":"ציר","name":"בלומושן 110 ישר","thickness":"קליפ-טופ אינסרטה","unit":"","price":16.07,"supplier":"","notes":"בלום","updated":""},{"code":"2088","category":"פרזול","subCategory":"ציר","name":"בלומושן 155 לנשלפים ישר","thickness":"קליפ אינסרטה","unit":"","price":29.51,"supplier":"","notes":"בלום","updated":""},{"code":"2089","category":"פרזול","subCategory":"ציר","name":"בלומושן 110 כפוף","thickness":"קליפ-טופ אינסרטה","unit":"","price":20.98,"supplier":"","notes":"בלום","updated":""},{"code":"2090","category":"פרזול","subCategory":"ציר","name":"בלומושן 155 לישומים מיוחדים כפוף","thickness":"קליפ אינסרטה","unit":"","price":44.01,"supplier":"","notes":"בלום","updated":""},{"code":"2091","category":"פרזול","subCategory":"תושבת","name":"תושבת  כנפיים","thickness":"תושבת סופר אקספנדו משוכלל","unit":"","price":3.32,"supplier":"","notes":"בלום","updated":""},{"code":"2092","category":"פרזול","subCategory":"תושבת","name":"תושבת  ישרה","thickness":"תושבת ישרה מתכת משוכלל אקספנדו דיבל 5 מ\"מ","unit":"","price":2.72,"supplier":"","notes":"בלום","updated":""},{"code":"2093","category":"פרזול","subCategory":"מגירה","name":"אורצ'רד","thickness":"דופן נמוכה","unit":"","price":65.0,"supplier":"","notes":"אורצ'רד","updated":""},{"code":"2094","category":"פרזול","subCategory":"מגירה","name":"אורצ'רד","thickness":"עם גלריה","unit":"","price":85.0,"supplier":"","notes":"אורצ'רד","updated":""},{"code":"2095","category":"פרזול","subCategory":"מגירה","name":"אורצ'רד","thickness":"עם דופן זכוכית","unit":"","price":70.0,"supplier":"","notes":"אורצ'רד","updated":""},{"code":"2096","category":"פרזול","subCategory":"סוקל","name":"PVC 10 ס\"מ","thickness":"למטר","unit":"","price":20.0,"supplier":"","notes":"בלורן","updated":""},{"code":"2097","category":"פרזול","subCategory":"סוקל","name":"PVC 12 ס\"מ","thickness":"למטר","unit":"","price":25.0,"supplier":"","notes":"בלורן","updated":""},{"code":"2098","category":"פרזול","subCategory":"לד","name":"לד שקוע עם מפסק","thickness":"למטר","unit":"","price":180.0,"supplier":"","notes":"בלורן","updated":""},{"code":"2099","category":"פרזול","subCategory":"לד","name":"חיישן להדלקה בפתיחה (סנסור)","thickness":"ליחידה","unit":"","price":196.0,"supplier":"","notes":"בלורן","updated":""},{"code":"2100","category":"פרזול","subCategory":"דלת הזזה","name":"מסילת הזזה פנימית 2 מטר T409","thickness":"סט ל 2 כנפיים","unit":"","price":466.0,"supplier":"","notes":"דומיסיל","updated":""},{"code":"2101","category":"פרזול","subCategory":"סרווטו","name":"T3 בלומושן אפור","thickness":"רוחב 56-95","unit":"","price":483.0,"supplier":"","notes":"בלורן","updated":""},{"code":"2102","category":"פרזול","subCategory":"סרווטו","name":"T3 בלומושן שחור","thickness":"רוחב 56-95","unit":"","price":505.0,"supplier":"","notes":"בלורן","updated":""},{"code":"2103","category":"פרזול","subCategory":"מגירה","name":"טנדם 55","thickness":"כולל חומר ועבודה","unit":"","price":170.0,"supplier":"","notes":"בלורן","updated":""},{"code":"2104","category":"פרזול","subCategory":"מגירה","name":"אורצ'רד 55 עם זכוכית","thickness":"כולל חומר ועבודה","unit":"","price":130.0,"supplier":"","notes":"אורצ'רד","updated":""},{"code":"2105","category":"פרזול","subCategory":"מגירה","name":"אורצ'רד 55 עם גלריה","thickness":"כולל חומר ועבודה","unit":"","price":115.0,"supplier":"","notes":"אורצ'רד","updated":""},{"code":"2106","category":"פרזול","subCategory":"מגירה","name":"אורצ'רד עם דופן נמוכה","thickness":"כולל חומר ועבודה","unit":"","price":95.0,"supplier":"","notes":"אורצ'רד","updated":""},{"code":"2107","category":"פרזול","subCategory":"דלת הזזה","name":"גלגל + בריח טרולה","thickness":"35 מ\"מ","unit":"","price":6.17,"supplier":"","notes":"בלורן","updated":""},{"code":"3001","category":"חזיתות","subCategory":"פולימר","name":"אנגלי לייט","thickness":"מ\"ר","unit":"מ\"ר","price":491.0,"supplier":"","notes":"בלורן","updated":""},{"code":"3002","category":"צבע","subCategory":"צבע","name":"פוליאורטני","thickness":"מ\"ר","unit":"מ\"ר","price":160.0,"supplier":"","notes":"איברהים זרעיני","updated":""},{"code":"3003","category":"צבע","subCategory":"צבע","name":"לכה אקרילי 5%","thickness":"מ\"ר","unit":"מ\"ר","price":180.0,"supplier":"","notes":"איברהים זרעיני","updated":""},{"code":"3004","category":"צבע","subCategory":"צבע","name":"שלייפלאק מט","thickness":"מ\"ר","unit":"מ\"ר","price":220.0,"supplier":"","notes":"איברהים זרעיני","updated":""},{"code":"3005","category":"צבע","subCategory":"צבע","name":"שלייפלאק מבריק 50%","thickness":"מ\"ר","unit":"מ\"ר","price":440.0,"supplier":"","notes":"איברהים זרעיני","updated":""},{"code":"3006","category":"צבע","subCategory":"צבע","name":"שלייפלאק מט עם אינטגרלי/CNC","thickness":"מ\"ר","unit":"מ\"ר","price":240.0,"supplier":"","notes":"איברהים זרעיני","updated":""},{"code":"3007","category":"צבע","subCategory":"צבע","name":"שלייפלאק מבריק עם אינטגרלי/CNC","thickness":"מ\"ר","unit":"מ\"ר","price":480.0,"supplier":"","notes":"איברהים זרעיני","updated":""},{"code":"3008","category":"חזיתות","subCategory":"עץ מלא","name":"יובל ללא לכה","thickness":"מ\"ר","unit":"מ\"ר","price":948.0,"supplier":"","notes":"בלורן","updated":""},{"code":"3009","category":"חזיתות","subCategory":"ראטן + מקל סבא","name":"מקל סבא צבע + ראטן","thickness":"מ\"ר","unit":"מ\"ר","price":2000.0,"supplier":"","notes":"דרור","updated":""},{"code":"3010","category":"חזיתות","subCategory":"מקל סבא","name":"מקבל סבא צבע 2 צדדים","thickness":"מ\"ר","unit":"מ\"ר","price":1300.0,"supplier":"","notes":"דרור","updated":""},{"code":"3011","category":"חזיתות","subCategory":"פולימר","name":"פאפא","thickness":"מ\"ר","unit":"מ\"ר","price":846.0,"supplier":"","notes":"בלורן","updated":""},{"code":"3012","category":"חזיתות","subCategory":"פולימר","name":"אקרופוליס חדש","thickness":"מ\"ר","unit":"מ\"ר","price":931.0,"supplier":"","notes":"בלורן","updated":""},{"code":"3013","category":"חזיתות","subCategory":"פולימר","name":"שנגרילה חדש","thickness":"מ\"ר","unit":"מ\"ר","price":931.0,"supplier":"","notes":"בלורן","updated":""},{"code":"3014","category":"חזיתות","subCategory":"פולימר","name":"אינגלנד","thickness":"מ\"ר","unit":"מ\"ר","price":654.0,"supplier":"","notes":"בלורן","updated":""},{"code":"3015","category":"חזיתות","subCategory":"צבע","name":"לכה 0%","thickness":"מ\"ר","unit":"מ\"ר","price":385.0,"supplier":"","notes":"בלורן","updated":""},{"code":"3016","category":"חזיתות","subCategory":"ללא צבע","name":"אנגלי לייט","thickness":"מ\"ר","unit":"מ\"ר","price":381.0,"supplier":"","notes":"בלורן","updated":""},{"code":"3017","category":"חזיתות","subCategory":"CNC","name":"MDF 19 יצוק","thickness":"מ\"ר","unit":"מ\"ר","price":220.0,"supplier":"","notes":"איברהים זרעיני","updated":""},{"code":"3018","category":"חזיתות","subCategory":"ידית","name":"אינטגרלית","thickness":"לחזית","unit":"","price":120.0,"supplier":"","notes":"רוטר","updated":""},{"code":"3019","category":"חזיתות","subCategory":"מלמין","name":"MDF מלמין יצוק","thickness":"פלטה","unit":"פלטה","price":347.0,"supplier":"","notes":"בלורן","updated":""},{"code":"3020","category":"חזיתות","subCategory":"פולימר","name":"טוסקנה","thickness":"מ\"ר","unit":"מ\"ר","price":931.0,"supplier":"","notes":"בלורן","updated":""},{"code":"3021","category":"חזיתות","subCategory":"פולימר","name":"מיקונוס","thickness":"מ\"ר","unit":"מ\"ר","price":654.0,"supplier":"","notes":"בלורן","updated":""},{"code":"3022","category":"חזיתות","subCategory":"CNC","name":"MDF יצוק 22","thickness":"מ\"ר","unit":"מ\"ר","price":250.0,"supplier":"","notes":"איברהים זרעיני","updated":""}];
 // v0.13: authoritative import from the Excel sheet "מחירון - מאוחד".
 // Only pricebook is replaced; projects, furniture, quotes, production and purchasing data are preserved.
@@ -472,8 +488,8 @@ function renderDashboard(){
 
   let projects=db.projects||[], furniture=db.furniture||[];
   let activeFurniture=furniture.filter(f=>f.execStatus!=="הושלם");
-  let prod=furniture.filter(f=>f.execStatus==="שוחרר לייצור");
-  let blockedProd=prod.filter(f=>(f.productionStages||[]).some(s=>s.blocked||s.status==="תקוע"));
+  let prod=furniture.filter(f=>f.execStatus==="שוחרר לביצוע");
+  let blockedProd=[];
   let purchase=buildPurchaseRequirements();
   let openPurchase=purchase.filter(r=>r.active&&purchaseStatus(r)!=="הושלם");
   let installFs=furniture.filter(f=>f.installation);
@@ -500,7 +516,6 @@ function renderDashboard(){
     <div class="dash-kpi" onclick="show('purchasing')">רכש פתוח<div class="v">${openPurchase.length}</div></div>
     <div class="dash-kpi" onclick="show('installation')">התקנות השבוע<div class="v">${upcomingInstall.filter(x=>x.text.startsWith("התקנה")).length}</div></div>
     <div class="dash-kpi" onclick="show('installation')">השלמות פתוחות<div class="v">${openCompletions}</div></div>
-    <div class="dash-kpi" onclick="show('production')">תקועים בייצור<div class="v">${blockedProd.length}</div></div>
   </div>`;
 
   dashProjects.innerHTML=activeProjects.length?activeProjects.slice(0,8).map(p=>{
@@ -509,7 +524,6 @@ function renderDashboard(){
   }).join(""):'<div class="muted">אין פרויקטים פעילים.</div>';
 
   let alerts=[];
-  blockedProd.forEach(f=>{let p=db.projects.find(x=>x.id===f.projectId);alerts.push({level:"red",title:`ייצור תקוע — ${f.name}`,detail:p?.name||"",fid:f.id})});
   furniture.filter(f=>f.execStatus!=="הושלם"&&f.due&&f.due<today).forEach(f=>{let p=db.projects.find(x=>x.id===f.projectId);alerts.push({level:"red",title:`רהיט עבר תאריך יעד — ${f.name}`,detail:`${p?.name||""} · יעד ${f.due}`,fid:f.id})});
   installFs.forEach(f=>{
     let d=f.installation?.plannedDate;if(!d||d<today)return;
@@ -547,7 +561,7 @@ function furnitureProgress(f){
   if(f.execStatus==="הושלם")return 100;
   if(f.installation?.status==="הותקן")return 90;
   if(f.installation?.plannedDate)return 80;
-  if(f.execStatus==="שוחרר לייצור"){
+  if(f.execStatus==="שוחרר לביצוע"){
     let s=f.productionStages||[];if(!s.length)return 45;
     return 45+Math.round(30*s.filter(x=>x.status==="הושלם").length/s.length);
   }
@@ -666,7 +680,7 @@ function showDeleteToast(text){
   document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
 }
 
-function newFurniture(project=""){show("furniture");fid.value="";fillProjects();fproject.value=project;fname.value="";ftype.value="מטבח";fdue.value="";fexec.value="טרם שוחרר";fblocker.value="";fnotes.value="";laborHours.value=0;laborRate.value=0;profitPercentInput.value="";sellInput.value="";step=0;drawSteps();renderReadiness({});calcRows.innerHTML="";addRegular();buyRows.innerHTML=""}
+function newFurniture(project=""){show("furniture");fid.value="";fillProjects();fproject.value=project;fname.value="";ftype.value="מטבח";fdue.value="";fexec.value="טרם שוחרר";fnotes.value="";laborHours.value=0;laborRate.value=0;profitPercentInput.value="";sellInput.value="";step=0;drawSteps();renderReadiness({});calcRows.innerHTML="";addRegular();buyRows.innerHTML=""}
 function drawSteps(){STEPS=db.settings.steps;step=Math.min(step,STEPS.length-1);steps.innerHTML=STEPS.map((s,i)=>`<div onclick="step=${i};drawSteps()" class="step ${i===step?'current':''}">${s}</div>`).join("")}
 function addRegular(d={}){
   let r=document.createElement("div");r.className="line";
@@ -728,7 +742,7 @@ function recalc(){
   totalCost.textContent=money(total);
   sell.textContent=money(s);
   profit.textContent=money(s-total);
-  margin.textContent=s?((s-total)/s*100).toFixed(1)+"%":"0%";
+  if(document.getElementById("margin"))margin.textContent=s?((s-total)/s*100).toFixed(1)+"%":"0%";
 }
 function recalcFromCost(){
   if(profitPercentInput.value!==""){
@@ -803,8 +817,8 @@ function chooseMaterial(code,name,unit,price){
 }
 
 function readLines(){return [...document.querySelectorAll("#calcRows .line")].map(r=>({special:r.classList.contains("special"),name:r.classList.contains("special")?r.querySelector(".specialName").value:db.pricebook[+r.querySelector(".item").value].name,unit:r.querySelector(".unit").value,qty:+r.querySelector(".qty").value||0,price:+r.querySelector(".price").value||0,source:r.querySelector(".needs-order").checked?"צריך להזמין":"מלאי",toBook:!!r.querySelector(".toBook")?.checked}))}
-function saveFurniture(){if(!fproject.value||!fname.value.trim())return alert("בחר פרויקט והזן שם רהיט");let lines=readLines();lines.filter(x=>x.special&&x.toBook&&x.name).forEach(x=>{if(!db.pricebook.some(p=>p.name===x.name))db.pricebook.push({name:x.name,unit:x.unit,price:x.price})});let existing=db.furniture.find(f=>f.id===fid.value);let x={id:fid.value||makeId(),projectId:fproject.value,name:fname.value,type:ftype.value,due:fdue.value,execStatus:fexec.value||"טרם שוחרר",blocker:fblocker.value,readiness:readReadiness(),step,lines,laborHours:+laborHours.value||0,laborRate:+laborRate.value||0,sell:+sellInput.value||0,notes:fnotes.value};if(existing?.releasedAt)x.releasedAt=existing.releasedAt;if(existing?.productionStages)x.productionStages=existing.productionStages;let i=db.furniture.findIndex(f=>f.id===x.id);i>=0?db.furniture[i]=x:db.furniture.push(x);save();alert("הרהיט נשמר")}
-function editFurniture(xid){let f=db.furniture.find(x=>x.id===xid);show("furniture");fid.value=f.id;fillProjects();fproject.value=f.projectId;fname.value=f.name;ftype.value=f.type;fdue.value=f.due||"";fexec.value=f.execStatus||"טרם שוחרר";fblocker.value=f.blocker||"";fnotes.value=f.notes||"";laborHours.value=f.laborHours||0;laborRate.value=f.laborRate||0;sellInput.value=f.sell||0;let _tc=(f.lines||[]).reduce((a,l)=>a+(+l.qty||0)*(+l.price||0),0)+(f.laborHours||0)*(f.laborRate||0);profitPercentInput.value=_tc?(((f.sell||0)-_tc)/_tc*100).toFixed(1):"";step=Math.min(f.step||0,STEPS.length-1);drawSteps();renderReadiness(f.readiness||{});calcRows.innerHTML="";(f.lines||[]).forEach(l=>{if(l.special)addSpecial(l);else{let ix=db.pricebook.findIndex(p=>p.name===l.name);addRegular({index:Math.max(ix,0),qty:l.qty,price:l.price})}let r=calcRows.lastElementChild;r.querySelector(".needs-order").checked=(l.source==="צריך להזמין")});if(!(f.lines||[]).length)addRegular();recalcFromCost()}
+function saveFurniture(){if(!fproject.value||!fname.value.trim())return alert("בחר פרויקט והזן שם רהיט");let lines=readLines();lines.filter(x=>x.special&&x.toBook&&x.name).forEach(x=>{if(!db.pricebook.some(p=>p.name===x.name))db.pricebook.push({name:x.name,unit:x.unit,price:x.price})});let existing=db.furniture.find(f=>f.id===fid.value);let x={...(existing||{}),id:fid.value||makeId(),projectId:fproject.value,name:fname.value,type:ftype.value,due:fdue.value,execStatus:fexec.value||"טרם שוחרר",readiness:readReadiness(),step,lines,laborHours:+laborHours.value||0,laborRate:+laborRate.value||0,sell:+sellInput.value||0,notes:fnotes.value};if(existing?.releasedAt)x.releasedAt=existing.releasedAt;if(existing?.productionStages)x.productionStages=existing.productionStages;let i=db.furniture.findIndex(f=>f.id===x.id);i>=0?db.furniture[i]=x:db.furniture.push(x);save();alert("הרהיט נשמר")}
+function editFurniture(xid){let f=db.furniture.find(x=>x.id===xid);show("furniture");fid.value=f.id;fillProjects();fproject.value=f.projectId;fname.value=f.name;ftype.value=f.type;fdue.value=f.due||"";fexec.value=f.execStatus||"טרם שוחרר";fnotes.value=f.notes||"";laborHours.value=f.laborHours||0;laborRate.value=f.laborRate||0;sellInput.value=f.sell||0;let _tc=(f.lines||[]).reduce((a,l)=>a+(+l.qty||0)*(+l.price||0),0)+(f.laborHours||0)*(f.laborRate||0);profitPercentInput.value=_tc?(((f.sell||0)-_tc)/_tc*100).toFixed(1):"";step=Math.min(f.step||0,STEPS.length-1);drawSteps();renderReadiness(f.readiness||{});calcRows.innerHTML="";(f.lines||[]).forEach(l=>{if(l.special)addSpecial(l);else{let ix=db.pricebook.findIndex(p=>p.name===l.name);addRegular({index:Math.max(ix,0),qty:l.qty,price:l.price})}let r=calcRows.lastElementChild;r.querySelector(".needs-order").checked=(l.source==="צריך להזמין")});if(!(f.lines||[]).length)addRegular();recalcFromCost()}
 function renderReadiness(data={}){
   readinessChecklist.innerHTML=db.settings.readiness.map(c=>`<label class="checkitem"><input type="checkbox" data-check="${c.id}" ${data[c.id]?'checked':''}><span>${esc(c.label)}${c.required?' *':''}</span></label>`).join("");
   readinessChecklist.querySelectorAll("input").forEach(x=>x.addEventListener("change",updateReadinessState));
@@ -815,23 +829,21 @@ function updateReadinessState(){
   if(!document.getElementById("readinessChecklist"))return;
   let vals=readReadiness();
   let missing=db.settings.readiness.filter(c=>c.required&&!vals[c.id]);
-  let blockerText=(document.getElementById("fblocker")?.value||"").trim();
   let btn=document.getElementById("releaseBtn");
-  let already=(document.getElementById("fexec")?.value==="שוחרר לייצור");
+  let already=(document.getElementById("fexec")?.value==="שוחרר לביצוע");
   if(already){
-    readinessState.innerHTML=`<div class="release-success"><b>הריהוט כבר שוחרר לייצור</b><br>אפשר לעבור למסך הייצור ולעדכן את שלבי העבודה.</div>`;
+    readinessState.innerHTML=`<div class="release-success"><b>הריהוט כבר שוחרר לביצוע</b><br>אפשר לעבור למסך הביצוע ולעדכן את שלבי העבודה.</div>`;
     if(btn){btn.disabled=false;btn.textContent="פתח במסך ייצור";btn.dataset.mode="open"}
     return;
   }
-  if(missing.length||blockerText){
+  if(missing.length){
     let parts=[];
     if(missing.length)parts.push(`חסרות ${missing.length} בדיקות חובה: ${missing.map(x=>esc(x.label)).join(", ")}`);
-    if(blockerText)parts.push(`חסם פתוח: ${esc(blockerText)}`);
-    readinessState.innerHTML=`<div class="blocker"><b>חסום לייצור</b><br>${parts.join("<br>")}</div>`;
-    if(btn){btn.disabled=true;btn.textContent=`שחרר לייצור (${missing.length} חסרות)`;btn.dataset.mode="release"}
+    readinessState.innerHTML=`<div class="blocker"><b>עדיין לא מוכן לביצוע</b><br>${parts.join("<br>")}</div>`;
+    if(btn){btn.disabled=true;btn.textContent=`שחרר לביצוע (${missing.length} חסרות)`;btn.dataset.mode="release"}
   }else{
-    readinessState.innerHTML=`<div class="ready"><b>מוכן לשחרור לייצור</b><br>כל בדיקות החובה הושלמו ואין חסם פתוח.</div>`;
-    if(btn){btn.disabled=false;btn.textContent="שחרר לייצור";btn.dataset.mode="release"}
+    readinessState.innerHTML=`<div class="ready"><b>מוכן לשחרור לביצוע</b><br>כל בדיקות החובה הושלמו.</div>`;
+    if(btn){btn.disabled=false;btn.textContent="שחרר לביצוע";btn.dataset.mode="release"}
   }
 }
 function releaseToProduction(){
@@ -847,21 +859,20 @@ function releaseToProduction(){
 
   let vals=readReadiness();
   let missing=db.settings.readiness.filter(c=>c.required&&!vals[c.id]);
-  if(missing.length||fblocker.value.trim()){updateReadinessState();return}
+  if(missing.length){updateReadinessState();return}
 
   let index=db.furniture.findIndex(x=>x.id===fid.value);
   if(index<0)return alert("לא נמצא הרהיט השמור");
 
   let f=db.furniture[index];
   f.readiness=vals;
-  f.execStatus="שוחרר לייצור";
-  f.blocker="";
+  f.execStatus="שוחרר לביצוע";
   f.due=fdue.value;
   f.releasedAt=f.releasedAt||new Date().toISOString();
 
   let template=(db.settings&&Array.isArray(db.settings.productionSteps)&&db.settings.productionSteps.length)
     ? db.settings.productionSteps
-    : ["חיתוך","קנטים","קידוחים / CNC","הרכבה","חזיתות / גמר","בקרת איכות","מוכן להתקנה"];
+    : ["חיתוך","קנטים","קידוחים / CNC","הרכבה","חזיתות / גמר","בקרת איכות","הובלה","התקנה","השלמות","הושלם"];
 
   if(!Array.isArray(f.productionStages)||!f.productionStages.length){
     f.productionStages=template.map(name=>({
@@ -870,7 +881,7 @@ function releaseToProduction(){
   }
 
   db.furniture[index]=f;
-  fexec.value="שוחרר לייצור";
+  fexec.value="שוחרר לביצוע";
   localStorage.setItem(KEY,JSON.stringify(db));
 
   ensureProductionData();
@@ -881,7 +892,7 @@ function releaseToProduction(){
   prodFilter="all";
   renderProductionBoard();
 
-  alert(`"${f.name}" שוחרר לייצור ומופיע כעת במסך הייצור`);
+  alert(`"${f.name}" שוחרר לביצוע ומופיע כעת במסך הביצוע`);
 }
 let prodFilter="all";
 function setProdFilter(filter){
@@ -895,10 +906,10 @@ function ensureProductionData(){
   let changed=false;
   let template=(db.settings&&Array.isArray(db.settings.productionSteps)&&db.settings.productionSteps.length)
     ? db.settings.productionSteps
-    : ["חיתוך","קנטים","קידוחים / CNC","הרכבה","חזיתות / גמר","בקרת איכות","מוכן להתקנה"];
+    : ["חיתוך","קנטים","קידוחים / CNC","הרכבה","חזיתות / גמר","בקרת איכות","הובלה","התקנה","השלמות","הושלם"];
   db.furniture.forEach(f=>{
-    if(f.execStatus==="שוחרר לייצור" && (!Array.isArray(f.productionStages)||!f.productionStages.length)){
-      f.productionStages=template.map(name=>({id:makeId(),name,status:"לא התחיל",worker:"",workerIds:[],start:"",end:"",durationDays:1,note:"",blocked:false}));
+    if(f.execStatus==="שוחרר לביצוע" && (!Array.isArray(f.productionStages)||!f.productionStages.length)){
+      f.productionStages=template.map(name=>({id:makeId(),name,status:"לא התחיל",worker:"",workerIds:[],start:"",end:"",durationDays:1,note:""}));
       changed=true;
     }
   });
@@ -912,11 +923,10 @@ function renderProductionBoard(){
   if(!document.getElementById("productionBoard"))return;
   updateProdFilterButtons();
   ensureProductionData();
-  let fs=db.furniture.filter(f=>f.execStatus==="שוחרר לייצור");
+  let fs=db.furniture.filter(f=>f.execStatus==="שוחרר לביצוע");
 
-  if(prodFilter==="blocked")fs=fs.filter(f=>f.productionStages.some(s=>s.blocked||s.status==="תקוע"));
   if(prodFilter==="done")fs=fs.filter(f=>productionProgress(f)===100);
-  if(prodFilter==="active")fs=fs.filter(f=>productionProgress(f)<100&&!f.productionStages.some(s=>s.blocked||s.status==="תקוע"));
+  if(prodFilter==="active")fs=fs.filter(f=>productionProgress(f)<100);
   productionBoard.innerHTML=fs.length?(`<div style="grid-column:1/-1;margin-bottom:2px" class="muted">סה"כ ${fs.length} רהיטים בתצוגה</div>`+fs.map(f=>{
     let p=db.projects.find(x=>x.id===f.projectId), pct=productionProgress(f);
     return `<div class="prod-card">
@@ -924,7 +934,7 @@ function renderProductionBoard(){
       <div style="margin-top:8px"><b>${pct}%</b> הושלם</div>
       <div class="prod-stage-list">${f.productionStages.map((s,i)=>productionStageHtml(f,s,i)).join("")}</div>
       <div class="actions" style="margin-top:12px">
-        <button class="secondary" onclick="updateFurnitureProductionProcess('${f.id}')">עדכן לתהליך הייצור החדש</button>
+        <button class="secondary" onclick="updateFurnitureProductionProcess('${f.id}')">עדכן לתהליך הביצוע החדש</button>
         <button class="secondary" onclick="editFurniture('${f.id}')">כרטיס רהיט</button>
       </div>
     </div>`}).join("")):'<div class="muted">אין רהיטים שמתאימים למסנן הזה. אם הרהיט שוחרר כעת, נסה לבחור “הכל”.</div>';
@@ -978,13 +988,12 @@ function updateProdEnd(fid,i,end){
 }
 
 function productionStageHtml(f,s,i){
-  let statuses=["לא התחיל","בתהליך","הושלם","תקוע"],isDone=s.status==="הושלם";
+  let statuses=["לא התחיל","בתהליך","הושלם"],isDone=s.status==="הושלם";
   if(!Array.isArray(s.workerIds))s.workerIds=normalizeWorkerIds(s.worker||"");
   if(!s.durationDays)s.durationDays=daysBetweenDates(s.start,s.end)||1;
   return `<div class="prod-stage">
     <div class="prod-stage-head"><b>${i+1}. ${esc(s.name)}</b><div class="actions">
       <button type="button" class="prod-done-btn ${isDone?'done':''}" onclick="markProductionDone('${f.id}',${i})">${isDone?'✓ בוצע':'בוצע'}</button>
-      <label style="font-size:12px"><input type="checkbox" ${s.blocked?'checked':''} onchange="updateProdStage('${f.id}',${i},'blocked',this.checked)"> חסם</label>
     </div></div>
 
     <div class="prod-stage-grid">
@@ -1011,7 +1020,7 @@ function productionStageHtml(f,s,i){
 }
 function markProductionDone(fid,i){
   let f=db.furniture.find(x=>x.id===fid);if(!f||!f.productionStages?.[i])return;
-  let s=f.productionStages[i];s.status="הושלם";s.blocked=false;
+  let s=f.productionStages[i];s.status="הושלם";
   if(!s.start)s.start=new Date().toISOString().slice(0,10);
   s.end=new Date().toISOString().slice(0,10);
   localStorage.setItem(KEY,JSON.stringify(db));renderProductionBoard();renderInstallationBoard();renderDashboard();
@@ -1033,17 +1042,16 @@ function updateProdStage(fid,i,key,val){
   if(key==="status"){
     if(val==="בתהליך"&&!f.productionStages[i].start)f.productionStages[i].start=new Date().toISOString().slice(0,10);
     if(val==="הושלם"&&!f.productionStages[i].end)f.productionStages[i].end=new Date().toISOString().slice(0,10);
-    if(val==="תקוע")f.productionStages[i].blocked=true;
   }
   localStorage.setItem(KEY,JSON.stringify(db));renderProductionBoard();renderInstallationBoard();
 }
 function updateFurnitureProductionProcess(fid){
   let f=db.furniture.find(x=>x.id===fid);if(!f)return;
-  if(!confirm("לעדכן את הרהיט לתהליך הייצור החדש? שלבים בעלי אותו שם ישמרו את הנתונים שלהם."))return;
+  if(!confirm("לעדכן את הרהיט לתהליך הביצוע החדש? שלבים בעלי אותו שם ישמרו את הנתונים שלהם."))return;
   let old=f.productionStages||[];
   f.productionStages=db.settings.productionSteps.map(name=>{
     let same=old.find(s=>s.name===name);
-    return same?same:{id:makeId(),name,status:"לא התחיל",worker:"",workerIds:[],start:"",end:"",durationDays:1,note:"",blocked:false}
+    return same?same:{id:makeId(),name,status:"לא התחיל",worker:"",workerIds:[],start:"",end:"",durationDays:1,note:""}
   });
   save();renderProductionBoard();
 }
@@ -1058,11 +1066,11 @@ function settingsTab(id){
   document.querySelectorAll(".settings-pane").forEach(x=>x.style.display="none");
   document.getElementById(id).style.display="block";
   if(id==="purchaseSettings")renderAreaSteps("purchaseSteps","purchaseStepEditor");
-  if(id==="installationSettings")renderAreaSteps("installationSteps","installationStepEditor");
+  if(id==="productionSettings")renderProductionSettings();
 }
 function addProductionStepSetting(){
   let row=document.createElement("div");row.className="process-editor";
-  row.innerHTML=`<input class="prod-setting-name" placeholder="שם שלב ייצור"><input class="prod-setting-order" type="number" value="${productionStepEditor.children.length+1}"><span class="muted">שלב ייצור</span><button class="secondary" onclick="this.parentElement.remove()">מחק</button>`;
+  row.innerHTML=`<input class="prod-setting-name" placeholder="שם שלב ביצוע"><input class="prod-setting-order" type="number" value="${productionStepEditor.children.length+1}"><span class="muted">שלב ביצוע</span><button class="secondary" onclick="this.parentElement.remove()">מחק</button>`;
   productionStepEditor.appendChild(row)
 }
 function renderProductionSettings(){
@@ -1070,23 +1078,31 @@ function renderProductionSettings(){
   productionStepEditor.innerHTML="";
   db.settings.productionSteps.forEach((name,i)=>{
     let row=document.createElement("div");row.className="process-editor";
-    row.innerHTML=`<input class="prod-setting-name" value="${esc(name)}"><input class="prod-setting-order" type="number" value="${i+1}"><span class="muted">שלב ייצור</span><button class="secondary" onclick="this.parentElement.remove()">מחק</button>`;
+    row.innerHTML=`<input class="prod-setting-name" value="${esc(name)}"><input class="prod-setting-order" type="number" value="${i+1}"><span class="muted">שלב ביצוע</span><button class="secondary" onclick="this.parentElement.remove()">מחק</button>`;
     productionStepEditor.appendChild(row)
   })
 }
 function saveProductionSettings(){
   let rows=[...document.querySelectorAll("#productionStepEditor .process-editor")].map(r=>({name:r.querySelector(".prod-setting-name").value.trim(),order:+r.querySelector(".prod-setting-order").value||999})).filter(x=>x.name).sort((a,b)=>a.order-b.order);
-  if(!rows.length)return alert("חייב להישאר לפחות שלב ייצור אחד");
+  if(!rows.length)return alert("חייב להישאר לפחות שלב ביצוע אחד");
   db.settings.productionSteps=rows.map(x=>x.name);
-  save();alert("שלבי הייצור נשמרו. רהיטים קיימים לא השתנו.")
+  save();alert("שלבי הביצוע נשמרו. רהיטים קיימים לא השתנו.")
 }
 
-function addProcessStep(){let h=processEditor;let row=document.createElement("div");row.className="process-editor";row.innerHTML=`<input class="ps-name" placeholder="שם שלב"><input class="ps-order" type="number" value="${h.children.length+1}"><select class="ps-required"><option value="1">חובה</option><option value="0">לא חובה</option></select><button class="secondary" onclick="this.parentElement.remove()">מחק</button>`;h.appendChild(row)}function renderSettings(){processEditor.innerHTML="";db.settings.steps.forEach((s,i)=>{let row=document.createElement("div");row.className="process-editor";row.innerHTML=`<input class="ps-name" value="${esc(s)}"><input class="ps-order" type="number" value="${i+1}"><select class="ps-required"><option value="1">חובה</option><option value="0">לא חובה</option></select><button class="secondary" onclick="this.parentElement.remove()">מחק</button>`;processEditor.appendChild(row)});readinessSettings.innerHTML=db.settings.readiness.map(c=>`<label class="checkitem"><input type="checkbox" data-rid="${c.id}" ${c.required?'checked':''}><span>${esc(c.label)}</span></label>`).join("");renderAreaSteps("purchaseSteps","purchaseStepEditor");renderAreaSteps("installationSteps","installationStepEditor");}
-function saveProcessSettings(){let rows=[...document.querySelectorAll("#processEditor .process-editor")].map(r=>({name:r.querySelector(".ps-name").value.trim(),order:+r.querySelector(".ps-order").value||999})).filter(x=>x.name).sort((a,b)=>a.order-b.order);if(!rows.length)return alert("חייב להישאר לפחות שלב אחד");db.settings.steps=rows.map(x=>x.name);document.querySelectorAll("#readinessSettings input[data-rid]").forEach(x=>{let c=db.settings.readiness.find(c=>c.id===x.dataset.rid);if(c)c.required=x.checked});STEPS=db.settings.steps;save();drawSteps();alert("הגדרות התהליך נשמרו")}function tab(x,b){document.querySelectorAll(".tabbody").forEach(e=>e.style.display="none");document.getElementById(x).style.display="block";document.querySelectorAll(".tabs button").forEach(e=>e.classList.remove("active"));b.classList.add("active")}
+function addProcessStep(){let h=processEditor;let row=document.createElement("div");row.className="process-editor";row.innerHTML=`<input class="ps-name" placeholder="שם שלב"><input class="ps-order" type="number" value="${h.children.length+1}"><select class="ps-required"><option value="1">חובה</option><option value="0">לא חובה</option></select><button class="secondary" onclick="this.parentElement.remove()">מחק</button>`;h.appendChild(row)}function renderSettings(){processEditor.innerHTML="";db.settings.steps.forEach((s,i)=>{let row=document.createElement("div");row.className="process-editor";row.innerHTML=`<input class="ps-name" value="${esc(s)}"><input class="ps-order" type="number" value="${i+1}"><select class="ps-required"><option value="1">חובה</option><option value="0">לא חובה</option></select><button class="secondary" onclick="this.parentElement.remove()">מחק</button>`;processEditor.appendChild(row)});readinessSettings.innerHTML=db.settings.readiness.map(c=>`<label class="checkitem"><input type="checkbox" data-rid="${c.id}" ${c.required?'checked':''}><span>${esc(c.label)}</span></label>`).join("");renderAreaSteps("purchaseSteps","purchaseStepEditor");renderProductionSettings();}
+function saveProcessSettings(){let rows=[...document.querySelectorAll("#processEditor .process-editor")].map(r=>({name:r.querySelector(".ps-name").value.trim(),order:+r.querySelector(".ps-order").value||999})).filter(x=>x.name).sort((a,b)=>a.order-b.order);if(!rows.length)return alert("חייב להישאר לפחות שלב אחד");db.settings.steps=rows.map(x=>x.name);document.querySelectorAll("#readinessSettings input[data-rid]").forEach(x=>{let c=db.settings.readiness.find(c=>c.id===x.dataset.rid);if(c)c.required=x.checked});STEPS=db.settings.steps;save();drawSteps();alert("הגדרות התהליך נשמרו")}function tab(x,b){document.querySelectorAll(".tabbody").forEach(e=>e.style.display="none");document.getElementById(x).style.display="block";if(x==="buy")renderFurniturePurchasing();document.querySelectorAll(".tabs button").forEach(e=>e.classList.remove("active"));b.classList.add("active")}
+
+function renderFurniturePurchasing(){
+  if(!document.getElementById("buyRows"))return;
+  let f=db.furniture.find(x=>x.id===fid.value);
+  if(!f){buyRows.innerHTML='<div class="muted">שמור את הרהיט כדי לראות את פריטי הרכש שלו.</div>';return;}
+  let rows=buildPurchaseRequirements().filter(r=>r.f.id===f.id && r.need>0);
+  buyRows.innerHTML=rows.length?`<table class="purchase-table"><tr><th>חומר</th><th>כמות</th><th>ספק</th><th>סטטוס</th><th>תאריך הזמנה</th><th>אספקה צפויה</th></tr>${rows.map(r=>`<tr><td><b>${esc(r.l.name)}</b></td><td>${r.need} ${esc(r.l.unit||"")}</td><td>${esc(r.saved.supplier||"—")}</td><td>${esc(purchaseStatus(r))}</td><td>${esc(r.saved.orderDate||"—")}</td><td>${esc(r.saved.eta||"—")}</td></tr>`).join("")}</table>`:'<div class="muted">אין כרגע פריטי רכש לרהיט הזה.</div>';
+}
 function newQuote(){quoteEditor.style.display="block";qid.value="";fillProjects();qnum.value="Q-"+String(db.quotes.length+1).padStart(3,"0");qver.value=1;qnotes.value="";qstatus.value="טיוטה";renderQuoteFurniture()}
 function renderQuoteFurniture(){let fs=db.furniture.filter(f=>f.projectId===qproject.value);quoteFurniture.innerHTML=fs.length?fs.map(f=>`<label class="quote-item"><input type="checkbox" data-id="${f.id}" onchange="quoteCalc()"><span><b>${esc(f.name)}</b><br><small>${esc(f.type)}</small></span><b>${money(f.sell)}</b></label>`).join(""):'<div class="muted">בחר פרויקט עם רהיטים</div>';quoteCalc()}
 function quoteCalc(){let ids=[...document.querySelectorAll("#quoteFurniture input:checked")].map(x=>x.dataset.id),sub=ids.reduce((a,i)=>a+(db.furniture.find(f=>f.id===i)?.sell||0),0);qsubtotal.textContent=money(sub);qvat.textContent=money(sub*.18);qtotal.textContent=money(sub*1.18);qcount.textContent=ids.length}
-function saveQuote(){let ids=[...document.querySelectorAll("#quoteFurniture input:checked")].map(x=>x.dataset.id);if(!qproject.value||!ids.length)return alert("בחר פרויקט ולפחות רהיט אחד");let items=ids.map(i=>{let f=db.furniture.find(x=>x.id===i);return{id:f.id,name:f.name,price:f.sell}});let x={id:makeId(),projectId:qproject.value,number:qnum.value,version:+qver.value||1,status:qstatus.value,notes:qnotes.value,items,date:new Date().toISOString().slice(0,10)};db.quotes.push(x);if(qstatus.value==="אושרה"){items.forEach(it=>{let f=db.furniture.find(z=>z.id===it.id);if(f&&f.execStatus!=="שוחרר לייצור")f.execStatus="אושר לביצוע"})}save();alert(qstatus.value==="אושרה"?"ההצעה נשמרה והריהוט סומן כמאושר לביצוע":"גרסת ההצעה נשמרה כ-Snapshot")}
+function saveQuote(){let ids=[...document.querySelectorAll("#quoteFurniture input:checked")].map(x=>x.dataset.id);if(!qproject.value||!ids.length)return alert("בחר פרויקט ולפחות רהיט אחד");let items=ids.map(i=>{let f=db.furniture.find(x=>x.id===i);return{id:f.id,name:f.name,price:f.sell}});let x={id:makeId(),projectId:qproject.value,number:qnum.value,version:+qver.value||1,status:qstatus.value,notes:qnotes.value,items,date:new Date().toISOString().slice(0,10)};db.quotes.push(x);if(qstatus.value==="אושרה"){items.forEach(it=>{let f=db.furniture.find(z=>z.id===it.id);if(f&&f.execStatus!=="שוחרר לביצוע")f.execStatus="אושר לביצוע"})}save();alert(qstatus.value==="אושרה"?"ההצעה נשמרה והריהוט סומן כמאושר לביצוע":"גרסת ההצעה נשמרה כ-Snapshot")}
 function printCurrent(){document.querySelectorAll(".view").forEach(x=>x.classList.remove("print"));furniture.classList.add("print");window.print()}
 function buildQuoteDocument(){
   let ids=[...document.querySelectorAll("#quoteFurniture input:checked")].map(x=>x.dataset.id);
@@ -1113,7 +1129,7 @@ function printQuote(){if(!buildQuoteDocument())return;quotePreviewWrap.style.dis
 
 let purchaseFilter="all";
 let purchaseView="items";
-function approvedFurnitureIds(){let ids=new Set();db.quotes.filter(q=>q.status==="אושרה").forEach(q=>(q.items||[]).forEach(i=>ids.add(i.id)));db.furniture.filter(f=>["אושר לביצוע","שוחרר לייצור"].includes(f.execStatus)).forEach(f=>ids.add(f.id));return ids}
+function approvedFurnitureIds(){let ids=new Set();db.quotes.filter(q=>q.status==="אושרה").forEach(q=>(q.items||[]).forEach(i=>ids.add(i.id)));db.furniture.filter(f=>["אושר לביצוע","שוחרר לביצוע"].includes(f.execStatus)).forEach(f=>ids.add(f.id));return ids}
 function buildPurchaseRequirements(){
   let approved=approvedFurnitureIds(),req=[];
   db.furniture.forEach(f=>{
@@ -1137,23 +1153,36 @@ function setPurchaseView(v){
   purchaseView=v;
   renderPurchasing();
 }
-function markPurchaseOrdered(key,need){
+function togglePurchaseOrdered(key,need,checked){
   if(!db.purchase[key])db.purchase[key]={};
   let x=db.purchase[key];
-  if(!x.ordered||+x.ordered<+need)x.ordered=+need||0;
-  if(!x.orderDate)x.orderDate=new Date().toISOString().slice(0,10);
-  x.status="הוזמן";
+  if(checked){
+    x.ordered=+need||0;
+    if(!x.orderDate)x.orderDate=new Date().toISOString().slice(0,10);
+    x.status="הוזמן";
+  }else{
+    if((+x.received||0)>0||x.status==="הושלם"){
+      if(!confirm("הפריט כבר סומן כסופק. להחזיר אותו לממתין להזמנה?")){renderPurchasing();return;}
+      x.received=0;x.receivedDate="";
+    }
+    x.ordered=0;x.orderDate="";x.eta="";x.status="";
+  }
   localStorage.setItem(KEY,JSON.stringify(db));
   renderPurchasing();renderDashboard();
 }
-function markPurchaseReceived(key,need){
+function togglePurchaseSupplied(key,need,checked){
   if(!db.purchase[key])db.purchase[key]={};
   let x=db.purchase[key];
-  x.received=+need||0;
-  if(!x.ordered||+x.ordered<+need)x.ordered=+need||0;
-  if(!x.orderDate)x.orderDate=new Date().toISOString().slice(0,10);
-  x.receivedDate=new Date().toISOString().slice(0,10);
-  x.status="הושלם";
+  if(checked){
+    x.ordered=+need||0;
+    if(!x.orderDate)x.orderDate=new Date().toISOString().slice(0,10);
+    x.received=+need||0;
+    x.receivedDate=new Date().toISOString().slice(0,10);
+    x.status="הושלם";
+  }else{
+    if(!confirm("להחזיר את הפריט מ'הושלם' ל'הוזמן'?")){renderPurchasing();return;}
+    x.received=0;x.receivedDate="";x.status="הוזמן";
+  }
   localStorage.setItem(KEY,JSON.stringify(db));
   renderPurchasing();renderDashboard();
 }
@@ -1166,19 +1195,22 @@ function purchaseRowClass(r){
 }
 function purchaseRowHtml(r){
   let s=purchaseStatus(r),disabled=r.active?"":"disabled";
+  let isOrdered=["הוזמן","הגיע חלקית","הושלם"].includes(s)||(+r.saved.ordered||0)>0;
+  let isSupplied=s==="הושלם"||((+r.saved.received||0)>=(+r.need||0)&&(+r.need||0)>0);
+  let etaDisabled=!r.active||!isOrdered||isSupplied;
   return `<tr class="purchase-row ${purchaseRowClass(r)} ${!r.active?'inactive-purchase':''}">
     <td>${esc(r.p?.name||"")}<br><b>${esc(r.f.name)}</b></td>
     <td>${esc(r.l.name)} ${r.l.special?'<span class="purchase-special">מיוחד</span>':''}</td>
     <td><b>${r.need}</b> ${esc(r.l.unit||"")}</td>
     <td><input ${disabled} value="${esc(r.saved.supplier||"")}" onchange="updatePurchase('${r.key}','supplier',this.value)"></td>
-    <td><input ${disabled} type="number" min="0" step="0.01" value="${r.saved.ordered||0}" onchange="updatePurchase('${r.key}','ordered',this.value)"></td>
-    <td><input ${disabled} type="number" min="0" step="0.01" value="${r.saved.received||0}" onchange="updatePurchase('${r.key}','received',this.value)"></td>
+    <td><label class="order-check"><input ${disabled} type="checkbox" ${isOrdered?'checked':''} onchange="togglePurchaseOrdered('${r.key}',${r.need},this.checked)"> הוזמן</label></td>
+    <td>${r.saved.orderDate?esc(r.saved.orderDate):'—'}</td>
+    <td><input ${etaDisabled?'disabled':''} type="date" value="${esc(r.saved.eta||"")}" onchange="updatePurchase('${r.key}','eta',this.value)" title="זמין לאחר סימון הוזמן"></td>
+    <td>${isOrdered&&!isSupplied?`<label class="order-check"><input ${disabled} type="checkbox" onchange="togglePurchaseSupplied('${r.key}',${r.need},this.checked)"> סופק</label>`:isSupplied?`<label class="order-check"><input ${disabled} type="checkbox" checked onchange="togglePurchaseSupplied('${r.key}',${r.need},this.checked)"> סופק</label>`:'—'}</td>
+    <td>${r.saved.receivedDate?esc(r.saved.receivedDate):'—'}</td>
     <td><input ${disabled} type="number" min="0" step="0.01" value="${r.saved.unitPrice??r.l.price??0}" onchange="updatePurchase('${r.key}','unitPrice',this.value)"></td>
-    <td><input ${disabled} type="date" value="${esc(r.saved.orderDate||"")}" onchange="updatePurchase('${r.key}','orderDate',this.value)"></td>
-    <td><input ${disabled} type="date" value="${esc(r.saved.eta||"")}" onchange="updatePurchase('${r.key}','eta',this.value)"></td>
     <td><span class="badge">${s}</span></td>
     <td><input ${disabled} class="purchase-note" value="${esc(r.saved.note||"")}" onchange="updatePurchase('${r.key}','note',this.value)" placeholder="הערה"></td>
-    <td>${r.active?`<div class="purchase-actions"><button type="button" class="secondary" onclick="markPurchaseOrdered('${r.key}',${r.need})">סמן כהוזמן</button><button type="button" onclick="markPurchaseReceived('${r.key}',${r.need})">התקבל</button></div>`:""}</td>
   </tr>`;
 }
 function groupedPurchaseRows(rows,mode){
@@ -1266,8 +1298,8 @@ function renderPurchasing(){
       <div class="purchase-group-body">
         <table><tr>
           <th>פרויקט / רהיט</th><th>חומר</th><th>כמות</th><th>ספק</th>
-          <th>הוזמן</th><th>הגיע</th><th>מחיר יח׳</th><th>תאריך הזמנה</th>
-          <th>אספקה צפויה</th><th>סטטוס</th><th>הערה</th><th>פעולות</th>
+          <th>הוזמן</th><th>תאריך הזמנה</th><th>אספקה צפויה</th><th>סופק</th>
+          <th>תאריך אספקה</th><th>מחיר יח׳</th><th>סטטוס</th><th>הערה</th>
         </tr>${g.rows.map(purchaseRowHtml).join("")}</table>
       </div>
     </div>`;
@@ -1346,7 +1378,7 @@ function productionComplete(f){
 }
 
 function eligibleForInstallation(f){
-  return f.execStatus==="שוחרר לייצור" && productionComplete(f);
+  return f.execStatus==="שוחרר לביצוע" && productionComplete(f);
 }
 
 function installState(f){
@@ -1461,7 +1493,7 @@ function renderInstallationBoard(){
         <button class="secondary" onclick="editFurniture('${f.id}')">כרטיס רהיט</button>
       </div>
     </div>`
-  }).join(""):'<div class="muted">עדיין אין רהיטים שסיימו את כל שלבי הייצור.</div>';
+  }).join(""):'<div class="muted">עדיין אין רהיטים שסיימו את כל שלבי הביצוע.</div>';
 }
 
 
