@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ניהול נגרייה v0.44</title>
+<title>ניהול נגרייה v0.45</title>
 <style>
 :root{--bg:#f4f6f3;--card:#fff;--text:#1f2923;--muted:#6f7b73;--line:#dde4de;--accent:#355f4b;--soft:#e9f0eb}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--text)}
@@ -208,7 +208,7 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
 .purchase-actions button{padding:6px 9px}
 .purchase-ordered{background:#eef3f7}.purchase-partial{background:#fff7e8}.purchase-complete{background:#eef7f0}
 </style></head>
-<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.44</div><div class="nav">
+<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.45</div><div class="nav">
 <button data-v="dashboard" class="active">דשבורד</button><button data-v="projects">פרויקטים</button><button data-v="furniture">כרטיס רהיט</button><button data-v="quotes">הצעות מחיר</button><button data-v="production">ביצוע</button><button data-v="schedule">לו״ז עבודה</button><button data-v="performance">סיכום ביצוע</button><button data-v="purchasing">רכש</button><button data-v="pricebook">מחירון</button><button data-v="settings">הגדרות תהליך</button>
 </div></aside><main>
 
@@ -292,8 +292,13 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
 <div class="panel" id="quoteList"></div>
 <div id="quoteEditor" style="display:none">
 <div class="panel"><input id="qid" type="hidden"><div class="grid"><div class="field"><label>פרויקט</label><select id="qproject" onchange="renderQuoteFurniture()"></select></div><div class="field"><label>מספר הצעה</label><input id="qnum"></div><div class="field"><label>גרסה</label><input id="qver" type="number" value="1"></div></div></div>
-<div class="panel"><h2>בחר רהיטים להצעה</h2><div id="quoteFurniture"></div></div>
-<div class="panel"><div class="grid"><div class="field"><label>תנאים / הערות ללקוח</label><textarea id="qnotes"></textarea></div><div class="field"><label>סטטוס</label><select id="qstatus"><option>טיוטה</option><option>נשלחה</option><option>אושרה</option><option>נדחתה</option></select></div></div>
+<div class="panel"><h2>בחר רהיטים להצעה</h2><div class="note" style="margin-bottom:10px">אפשר לבחור רהיט אחד או כמה. לאחר הבחירה ניתן לערוך לכל רהיט תיאור קצר וגמר חזית שיופיעו רק בהצעה.</div><div id="quoteFurniture"></div></div>
+<div class="panel"><h2>תנאי ההצעה</h2><div class="grid">
+<div class="field"><label>תנאי תשלום</label><textarea id="qpaymentTerms" placeholder="לדוגמה: 30% במעמד אישור ההצעה, 40% לפני אספקה, 30% בסיום ההתקנה"></textarea></div>
+<div class="field"><label>אופן התשלום</label><textarea id="qpaymentMethod" placeholder="מלל חופשי – העברה בנקאית / צ׳קים / אחר"></textarea></div>
+<div class="field"><label>תוקף ההצעה (ימים)</label><input id="qvalidDays" type="number" min="1" value="30"></div>
+<div class="field"><label>תנאים / הערות נוספות ללקוח</label><textarea id="qnotes"></textarea></div>
+<div class="field"><label>סטטוס</label><select id="qstatus"><option>טיוטה</option><option>נשלחה</option><option>אושרה</option><option>נדחתה</option></select></div></div>
 <div class="summary" style="margin-top:12px"><div class="sum">לפני מע"מ<b id="qsubtotal">₪0</b></div><div class="sum">מע"מ 18%<b id="qvat">₪0</b></div><div class="sum">סה"כ<b id="qtotal">₪0</b></div><div class="sum">רהיטים<b id="qcount">0</b></div></div>
 <div class="actions no-print" style="margin-top:12px"><button class="primary" onclick="saveQuote()">שמור גרסה</button><button class="secondary" onclick="previewQuote()">תצוגה מקדימה</button><button class="secondary" onclick="printQuote()">הפקה ל‑PDF</button></div></div></div>
 <div id="quotePreviewWrap" style="display:none"><div class="top no-print"><div><h1>תצוגת הצעת מחיר</h1><div class="sub">זה המסמך שהלקוח יקבל</div></div><div class="actions"><button class="secondary" onclick="closeQuotePreview()">חזרה לעריכה</button><button class="primary" onclick="printQuote()">הפקה ל‑PDF</button></div></div><div id="quoteDocument" class="quote-doc"></div></div>
@@ -1099,28 +1104,36 @@ function renderFurniturePurchasing(){
   let rows=buildPurchaseRequirements().filter(r=>r.f.id===f.id && r.need>0);
   buyRows.innerHTML=rows.length?`<table class="purchase-table"><tr><th>חומר</th><th>כמות</th><th>ספק</th><th>סטטוס</th><th>תאריך הזמנה</th><th>אספקה צפויה</th></tr>${rows.map(r=>`<tr><td><b>${esc(r.l.name)}</b></td><td>${r.need} ${esc(r.l.unit||"")}</td><td>${esc(r.saved.supplier||"—")}</td><td>${esc(purchaseStatus(r))}</td><td>${esc(r.saved.orderDate||"—")}</td><td>${esc(r.saved.eta||"—")}</td></tr>`).join("")}</table>`:'<div class="muted">אין כרגע פריטי רכש לרהיט הזה.</div>';
 }
-function newQuote(){quoteEditor.style.display="block";qid.value="";fillProjects();qnum.value="Q-"+String(db.quotes.length+1).padStart(3,"0");qver.value=1;qnotes.value="";qstatus.value="טיוטה";renderQuoteFurniture()}
-function renderQuoteFurniture(){let fs=db.furniture.filter(f=>f.projectId===qproject.value);quoteFurniture.innerHTML=fs.length?fs.map(f=>`<label class="quote-item"><input type="checkbox" data-id="${f.id}" onchange="quoteCalc()"><span><b>${esc(f.name)}</b><br><small>${esc(f.type)}</small></span><b>${money(f.sell)}</b></label>`).join(""):'<div class="muted">בחר פרויקט עם רהיטים</div>';quoteCalc()}
-function quoteCalc(){let ids=[...document.querySelectorAll("#quoteFurniture input:checked")].map(x=>x.dataset.id),sub=ids.reduce((a,i)=>a+(db.furniture.find(f=>f.id===i)?.sell||0),0);qsubtotal.textContent=money(sub);qvat.textContent=money(sub*.18);qtotal.textContent=money(sub*1.18);qcount.textContent=ids.length}
-function saveQuote(){let ids=[...document.querySelectorAll("#quoteFurniture input:checked")].map(x=>x.dataset.id);if(!qproject.value||!ids.length)return alert("בחר פרויקט ולפחות רהיט אחד");let items=ids.map(i=>{let f=db.furniture.find(x=>x.id===i);return{id:f.id,name:f.name,price:f.sell}});let x={id:makeId(),projectId:qproject.value,number:qnum.value,version:+qver.value||1,status:qstatus.value,notes:qnotes.value,items,date:new Date().toISOString().slice(0,10)};db.quotes.push(x);if(qstatus.value==="אושרה"){items.forEach(it=>{let f=db.furniture.find(z=>z.id===it.id);if(f&&f.execStatus!=="שוחרר לביצוע")f.execStatus="אושר לביצוע"})}save();alert(qstatus.value==="אושרה"?"ההצעה נשמרה והריהוט סומן כמאושר לביצוע":"גרסת ההצעה נשמרה כ-Snapshot")}
+function quoteDefaults(){
+  if(!db.settings.quote)db.settings.quote={paymentTerms:"30% במעמד אישור ההצעה\n40% לפני אספקה\n30% בסיום ההתקנה",paymentMethod:"העברה בנקאית / צ׳קים – לפי תיאום",validDays:30};
+  return db.settings.quote;
+}
+function newQuote(){let d=quoteDefaults();quoteEditor.style.display="block";qid.value="";fillProjects();qnum.value="Q-"+String(db.quotes.length+1).padStart(3,"0");qver.value=1;qnotes.value="";qpaymentTerms.value=d.paymentTerms||"";qpaymentMethod.value=d.paymentMethod||"";qvalidDays.value=d.validDays||30;qstatus.value="טיוטה";renderQuoteFurniture()}
+function renderQuoteFurniture(){let fs=db.furniture.filter(f=>f.projectId===qproject.value);quoteFurniture.innerHTML=fs.length?fs.map(f=>`<div class="quote-item" style="grid-template-columns:auto 1.2fr 1.4fr 1.2fr .7fr"><input type="checkbox" data-id="${f.id}" onchange="quoteCalc()"><span><b>${esc(f.name)}</b><br><small>${esc(f.type)}</small></span><input class="q-short" data-id="${f.id}" placeholder="תיאור קצר" value="${esc(f.name)}"><input class="q-finish" data-id="${f.id}" placeholder="גמר חזית"><b>${money(f.sell)}</b></div>`).join(""):'<div class="muted">בחר פרויקט עם רהיטים</div>';quoteCalc()}
+function quoteCalc(){let ids=[...document.querySelectorAll("#quoteFurniture input[type=checkbox]:checked")].map(x=>x.dataset.id),sub=ids.reduce((a,i)=>a+(db.furniture.find(f=>f.id===i)?.sell||0),0);qsubtotal.textContent=money(sub);qvat.textContent=money(sub*.18);qtotal.textContent=money(sub*1.18);qcount.textContent=ids.length}
+function quoteSelectedItems(){return [...document.querySelectorAll("#quoteFurniture input[type=checkbox]:checked")].map(c=>{let f=db.furniture.find(x=>x.id===c.dataset.id);let row=c.closest('.quote-item');return{id:f.id,name:f.name,type:f.type,price:+f.sell||0,description:row.querySelector('.q-short')?.value.trim()||f.name,finish:row.querySelector('.q-finish')?.value.trim()||""}})}
+function saveQuote(){let items=quoteSelectedItems();if(!qproject.value||!items.length)return alert("בחר פרויקט ולפחות רהיט אחד");let d=quoteDefaults();d.paymentTerms=qpaymentTerms.value;d.paymentMethod=qpaymentMethod.value;d.validDays=+qvalidDays.value||30;let x={id:makeId(),projectId:qproject.value,number:qnum.value,version:+qver.value||1,status:qstatus.value,notes:qnotes.value,paymentTerms:qpaymentTerms.value,paymentMethod:qpaymentMethod.value,validDays:+qvalidDays.value||30,items,date:new Date().toISOString().slice(0,10)};db.quotes.push(x);if(qstatus.value==="אושרה"){items.forEach(it=>{let f=db.furniture.find(z=>z.id===it.id);if(f&&f.execStatus!=="שוחרר לביצוע")f.execStatus="אושר לביצוע"})}save();alert(qstatus.value==="אושרה"?"ההצעה נשמרה והריהוט סומן כמאושר לביצוע":"גרסת ההצעה נשמרה כ-Snapshot")}
 function printCurrent(){document.querySelectorAll(".view").forEach(x=>x.classList.remove("print"));furniture.classList.add("print");window.print()}
 function buildQuoteDocument(){
-  let ids=[...document.querySelectorAll("#quoteFurniture input:checked")].map(x=>x.dataset.id);
-  if(!qproject.value||!ids.length){alert("בחר פרויקט ולפחות רהיט אחד");return false}
+  let items=quoteSelectedItems();
+  if(!qproject.value||!items.length){alert("בחר פרויקט ולפחות רהיט אחד");return false}
   let p=db.projects.find(x=>x.id===qproject.value);
-  let items=ids.map(i=>db.furniture.find(f=>f.id===i)).filter(Boolean);
-  let sub=items.reduce((a,f)=>a+(f.sell||0),0),vat=sub*.18,total=sub+vat;
-  let date=new Date().toLocaleDateString("he-IL");
+  let sub=items.reduce((a,f)=>a+(f.price||0),0),vat=sub*.18,total=sub+vat;
+  let now=new Date(), date=now.toLocaleDateString("he-IL"),valid=new Date(now);valid.setDate(valid.getDate()+(+qvalidDays.value||30));
+  let services=["מדידות סופיות באתר לפי התכנית","הובלה לבית הלקוח","ייצור והתקנה","אחריות של 5 שנים על העבודה והפרזול"];
   quoteDocument.innerHTML=`
   <div class="quote-head"><div><h1>הצעת מחיר</h1><div class="muted">נגריית משמר העמק</div></div>
-  <div class="quote-meta"><b>מספר הצעה:</b> ${esc(qnum.value)}<br><b>גרסה:</b> ${esc(qver.value)}<br><b>תאריך:</b> ${date}</div></div>
+  <div class="quote-meta"><b>מספר הצעה:</b> ${esc(qnum.value)}<br><b>גרסה:</b> ${esc(qver.value)}<br><b>תאריך:</b> ${date}<br><b>בתוקף עד:</b> ${valid.toLocaleDateString("he-IL")}</div></div>
   <div class="quote-client"><div><b>לכבוד:</b><br>${esc(p?.name||"")}</div><div><b>טלפון:</b><br>${esc(p?.phone||"")}</div><div><b>כתובת:</b><br>${esc(p?.address||"")}</div><div><b>פרויקט:</b><br>${esc(p?.name||"")}</div></div>
-  <div class="quote-items"><table><tr><th>#</th><th>תיאור</th><th>סוג</th><th>מחיר</th></tr>
-  ${items.map((f,i)=>`<tr><td>${i+1}</td><td><b>${esc(f.name)}</b>${f.notes?`<br><span class="muted">${esc(f.notes)}</span>`:""}</td><td>${esc(f.type||"")}</td><td>${money(f.sell)}</td></tr>`).join("")}
+  <div class="quote-items"><table><tr><th>#</th><th>רהיט / תיאור</th><th>גמר חזית</th><th>מחיר</th></tr>
+  ${items.map((f,i)=>`<tr><td>${i+1}</td><td><b>${esc(f.name)}</b>${f.description&&f.description!==f.name?`<br><span class="muted">${esc(f.description)}</span>`:""}</td><td>${esc(f.finish||"—")}</td><td>${money(f.price)}</td></tr>`).join("")}
   </table></div>
-  <div class="quote-totals"><div class="r"><span>סה"כ לפני מע"מ</span><b>${money(sub)}</b></div><div class="r"><span>מע"מ 18%</span><b>${money(vat)}</b></div><div class="r grand"><span>סה"כ לתשלום</span><b>${money(total)}</b></div></div>
-  ${qnotes.value.trim()?`<div class="quote-terms"><h2>תנאים והערות</h2>${esc(qnotes.value)}</div>`:""}
-  <div class="quote-footer">הצעת המחיר אינה מציגה את עלויות החומר או הרווחיות הפנימית.</div>`;
+  <div class="quote-totals"><div class="r"><span>סה"כ לפני מע"מ</span><b>${money(sub)}</b></div><div class="r"><span>מע"מ 18%</span><b>${money(vat)}</b></div><div class="r grand"><span>סה"כ ההצעה</span><b>${money(total)}</b></div></div>
+  <div class="quote-terms"><h2>השירותים הכלולים</h2>${services.map(x=>`<div>• ${esc(x)}</div>`).join("")}</div>
+  ${qpaymentTerms.value.trim()?`<div class="quote-terms"><h2>תנאי תשלום</h2>${esc(qpaymentTerms.value)}</div>`:""}
+  ${qpaymentMethod.value.trim()?`<div class="quote-terms"><h2>אופן התשלום</h2>${esc(qpaymentMethod.value)}</div>`:""}
+  ${qnotes.value.trim()?`<div class="quote-terms"><h2>הערות</h2>${esc(qnotes.value)}</div>`:""}
+  <div class="quote-footer">תודה שבחרתם בנגריית משמר העמק.</div>`;
   return true;
 }
 function previewQuote(){if(!buildQuoteDocument())return;quoteEditor.style.display="none";quotePreviewWrap.style.display="block"}
