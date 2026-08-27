@@ -289,7 +289,7 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
 }
 </style>
 </head>
-<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.53</div><div class="nav">
+<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.54</div><div class="nav">
 <button data-v="dashboard" class="active">דשבורד</button><button data-v="projects">פרויקטים</button><button data-v="furniture">כרטיס רהיט</button><button data-v="quotes">הצעות מחיר</button><button data-v="production">ביצוע</button><button data-v="schedule">לו״ז עבודה</button><button data-v="performance">סיכום ביצוע</button><button data-v="purchasing">רכש</button><button data-v="pricebook">מחירון</button><button data-v="settings">הגדרות תהליך</button>
 </div></aside><main>
 
@@ -2823,6 +2823,92 @@ window.previewQuote=previewQuoteV052;
     quoteDocument.innerHTML=document.getElementById("quoteDedicatedPrint").innerHTML;
     quoteEditor.style.display="none";
     quotePreviewWrap.style.display="block";
+  };
+})();
+</script>
+
+<style id="v054-quote-header">
+/* v0.54 — approved quote header:
+   logo + email + phone only; no duplicate company/location block */
+.v052-master .quote-print-head{
+  grid-template-columns:58mm 1fr 58mm !important;
+  align-items:start !important;
+}
+.v052-master .quote-logo-wrap{
+  grid-column:3 !important;
+  text-align:center !important;
+}
+.v052-master .quote-logo-wrap img{
+  display:block !important;
+  width:52mm !important;
+  max-height:26mm !important;
+  object-fit:contain !important;
+  margin:0 auto 2mm !important;
+}
+.v052-master .quote-company{
+  display:none !important;
+}
+.v052-master .quote-print-title{
+  grid-column:2 !important;
+  text-align:center !important;
+  align-self:center !important;
+  padding-top:3mm !important;
+}
+.v052-master .quote-print-title h1{
+  margin:0 !important;
+  font-size:28px !important;
+  line-height:1.05 !important;
+  white-space:nowrap !important;
+  color:#174f20 !important;
+}
+.v054-contact{
+  font-size:10.5px;
+  line-height:1.65;
+  text-align:center;
+  direction:ltr;
+  color:#18231d;
+}
+.v054-contact div{white-space:nowrap}
+.v054-contact .ico{
+  color:#174f20;
+  display:inline-block;
+  width:16px;
+  font-weight:700;
+}
+@media print{
+  .v052-master .quote-logo-wrap img{width:50mm !important}
+  .v052-master .quote-print-title h1{font-size:25px !important}
+}
+</style>
+<script id="v054-quote-header-script">
+(function(){
+  const previousBuild = window.v052BuildDedicatedQuote;
+  if(typeof previousBuild !== "function") return;
+
+  window.v052BuildDedicatedQuote = function(){
+    const ok = previousBuild();
+    if(!ok) return ok;
+
+    const root = document.querySelector("#quoteDedicatedPrint .v052-master");
+    if(!root) return ok;
+
+    const logoWrap = root.querySelector(".quote-logo-wrap");
+    if(logoWrap && !logoWrap.querySelector(".v054-contact")){
+      const contact = document.createElement("div");
+      contact.className = "v054-contact";
+      contact.innerHTML =
+        '<div><span class="ico">✉</span> nagaria@kmh.co.il</div>' +
+        '<div><span class="ico">☎</span> 050-1234567</div>';
+      logoWrap.appendChild(contact);
+    }
+
+    const title = root.querySelector(".quote-print-title h1");
+    if(title) title.textContent = "הצעת מחיר";
+
+    const company = root.querySelector(".quote-company");
+    if(company) company.remove();
+
+    return ok;
   };
 })();
 </script>
