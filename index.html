@@ -289,7 +289,7 @@ button:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.25)}
 }
 </style>
 </head>
-<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.50</div><div class="nav">
+<body><button type="button" class="mobile-menu-btn" style="display:none" onclick="toggleMobileNav()">☰</button><div id="mobileNavBackdrop" class="mobile-nav-backdrop" onclick="closeMobileNav()"></div><div class="app"><aside class="side"><div class="brand">נגרייה • v0.51</div><div class="nav">
 <button data-v="dashboard" class="active">דשבורד</button><button data-v="projects">פרויקטים</button><button data-v="furniture">כרטיס רהיט</button><button data-v="quotes">הצעות מחיר</button><button data-v="production">ביצוע</button><button data-v="schedule">לו״ז עבודה</button><button data-v="performance">סיכום ביצוע</button><button data-v="purchasing">רכש</button><button data-v="pricebook">מחירון</button><button data-v="settings">הגדרות תהליך</button>
 </div></aside><main>
 
@@ -1327,160 +1327,7 @@ function printQuote(){
   .quote-print-page{max-width:none;padding:0}
 }
 </style>
-</head><body><main class="quote-doc">${body}<div class="quote-signatures"><div class="quote-signature">אישור הלקוח · שם / חתימה / תאריך</div><div class="quote-signature">נגריית משמר העמק · חתימה / תאריך</div></div></main><script>window.onload=function(){setTimeout(function(){window.print()},180)}<\/script><div id="quoteDedicatedPrint" style="display:none"></div>
-<script id="v050-quote-fix">
-/* v0.50 — quote PDF uses the CURRENT editor selection and fields.
-   This fixes checked furniture, prices, payment terms, validity and free-text payment method. */
-function v050QuoteEditorData(){
-  const project=(db.projects||[]).find(p=>String(p.id)===String(qproject.value))||{};
-  const items=(typeof quoteSelectedItems==="function")?quoteSelectedItems():[];
-  const paymentRows=(typeof readPaymentRows==="function")?readPaymentRows("qPaymentRows"):[];
-  const subtotal=items.reduce((sum,it)=>sum+(Number(it.price)||0),0);
-  const vat=subtotal*.18;
-  const total=subtotal+vat;
-  const now=new Date();
-  const valid=new Date(now);
-  valid.setDate(valid.getDate()+(Number(qvalidDays.value)||30));
-  return {
-    project,items,paymentRows,subtotal,vat,total,
-    number:qnum.value||"",
-    version:qver.value||1,
-    date:now.toLocaleDateString("he-IL"),
-    validUntil:valid.toLocaleDateString("he-IL"),
-    paymentMethod:(qpaymentMethod.value||"").trim(),
-    notes:(qnotes.value||"").trim()
-  };
-}
-function v050BuildDedicatedQuote(){
-  const d=v050QuoteEditorData();
-  if(!qproject.value){alert("בחר פרויקט");return false}
-  if(!d.items.length){alert("בחר לפחות רהיט אחד להצעה");return false}
-  const pct=d.paymentRows.reduce((a,r)=>a+(Number(r.percent)||0),0);
-  if(!d.paymentRows.length){alert("יש להגדיר תנאי תשלום");return false}
-  if(Math.abs(pct-100)>.001){alert(`סך אחוזי התשלום הוא ${pct}%. יש להגיע ל-100%.`);return false}
-
-  const services=[
-    "מדידות סופיות באתר לפי התכנית",
-    "הובלה לבית הלקוח",
-    "ייצור והתקנה",
-    "אחריות של 5 שנים על העבודה והפרזול"
-  ];
-
-  const itemRows=d.items.map((it,i)=>{
-    const f=(db.furniture||[]).find(x=>String(x.id)===String(it.id))||{};
-    const dims=f.dimensions||f.size||f.dims||"—";
-    return `<tr>
-      <td>${i+1}</td>
-      <td><b>${v049Esc(it.description||it.name||"רהיט")}</b>${it.name&&it.description!==it.name?`<br><small>${v049Esc(it.name)}</small>`:""}</td>
-      <td>${v049Esc(dims)}</td>
-      <td>${v049Esc(it.finish||"—")}</td>
-      <td>${v049Esc(it.notes||"")}</td>
-      <td><b>${v049Money(it.price)}</b></td>
-    </tr>`;
-  }).join("");
-
-  const paymentRows=d.paymentRows.map((r,i)=>`<tr>
-    <td>${i+1}</td>
-    <td>${v049Esc(r.label||("שלב "+(i+1)))}</td>
-    <td>${Number(r.percent)||0}%</td>
-    <td>${v049Esc(r.trigger||"")}</td>
-    <td>${v049Money(d.total*(Number(r.percent)||0)/100)}</td>
-  </tr>`).join("");
-
-  const doc=`
-  <div class="quote-print-page">
-    <div class="quote-print-head">
-      <div class="quote-logo-wrap"><img src="${V049_LOGO}" alt="לוגו נגריית משמר העמק"></div>
-      <div class="quote-print-title">
-        <h1>הצעת מחיר ומפרט טכני עבור</h1>
-        <div class="subtitle">${v049Esc(d.project.name||"")}</div>
-      </div>
-      <div class="quote-company">
-        <h2>נגריית משמר העמק</h2>
-        <div>קיבוץ משמר העמק</div>
-        <div>טלפון: 050-1234567</div>
-        <div>nagria.mishmar@gmail.com</div>
-      </div>
-    </div>
-
-    <div class="quote-two-col">
-      <div class="quote-meta-box">
-        <div class="quote-meta-row"><b>מספר הצעה:</b><span>${v049Esc(d.number)}</span></div>
-        <div class="quote-meta-row"><b>תאריך:</b><span>${v049Esc(d.date)}</span></div>
-        <div class="quote-meta-row"><b>תקף עד:</b><span>${v049Esc(d.validUntil)}</span></div>
-      </div>
-      <div></div>
-    </div>
-
-    <div class="quote-two-col">
-      <div class="quote-box"><h3>פרטי הפרויקט</h3>
-        <div class="row"><b>שם הפרויקט:</b><span>${v049Esc(d.project.name||"")}</span></div>
-        <div class="row"><b>כתובת:</b><span>${v049Esc(d.project.address||"")}</span></div>
-      </div>
-      <div class="quote-box"><h3>פרטי הלקוח</h3>
-        <div class="row"><b>שם הלקוח:</b><span>${v049Esc(d.project.name||"")}</span></div>
-        <div class="row"><b>טלפון:</b><span>${v049Esc(d.project.phone||"")}</span></div>
-        ${d.project.email?`<div class="row"><b>דוא״ל:</b><span>${v049Esc(d.project.email)}</span></div>`:""}
-      </div>
-    </div>
-
-    <div class="quote-items-wrap">
-      <div class="quote-items-title">פריטים בהצעה</div>
-      <table class="quote-items-table">
-        <thead><tr><th>מס׳</th><th>תיאור הרהיט</th><th>מידות</th><th>גמר חזית</th><th>הערות</th><th>מחיר לפני מע״מ</th></tr></thead>
-        <tbody>${itemRows}</tbody>
-      </table>
-    </div>
-
-    <div class="quote-bottom-grid">
-      <div class="quote-total-box"><h3>מחיר ההצעה</h3>
-        <div class="quote-total-row"><span>מחיר לפני מע״מ</span><b>${v049Money(d.subtotal)}</b></div>
-        <div class="quote-total-row"><span>מע״מ 18%</span><b>${v049Money(d.vat)}</b></div>
-        <div class="quote-total-row grand"><span>סה״כ כולל מע״מ</span><b>${v049Money(d.total)}</b></div>
-      </div>
-      <div class="quote-services-box"><h3>השירותים הכלולים</h3>
-        <div class="quote-services-list">${services.map(s=>`<div class="quote-service">${v049Esc(s)}</div>`).join("")}</div>
-      </div>
-    </div>
-
-    <div class="quote-payments"><h3>תנאי תשלום</h3>
-      <table>
-        <thead><tr><th>שלב</th><th>שם</th><th>אחוז מהעסקה</th><th>מועד / תנאי לתשלום</th><th>סכום</th></tr></thead>
-        <tbody>${paymentRows}</tbody>
-      </table>
-      ${d.paymentMethod?`<div style="padding:10px 12px;font-size:12px"><b>אופן התשלום:</b> ${v049Esc(d.paymentMethod)}</div>`:""}
-    </div>
-
-    ${d.notes?`<div class="quote-notes"><h3>הערות</h3><div class="body">${v049Esc(d.notes)}</div></div>`:""}
-
-    <div class="quote-signatures">
-      <div class="quote-sign"><b>אישור הלקוח</b><br><br>שם: ____________ &nbsp;&nbsp; חתימה: ____________ &nbsp;&nbsp; תאריך: ____________</div>
-      <div class="quote-sign"><b>נגריית משמר העמק</b><br><br>חתימה: ____________ &nbsp;&nbsp; תאריך: ____________</div>
-    </div>
-    <div class="quote-thanks">תודה על האמון שנתתם בנו. נשמח לעמוד לשירותכם בכל שאלה.</div>
-  </div>`;
-
-  const target=document.getElementById("quoteDedicatedPrint");
-  target.innerHTML=doc;
-  return true;
-}
-function printQuoteV050(){
-  if(!v050BuildDedicatedQuote())return;
-  document.body.classList.add("quote-printing");
-  const cleanup=()=>{document.body.classList.remove("quote-printing");window.removeEventListener("afterprint",cleanup)};
-  window.addEventListener("afterprint",cleanup);
-  setTimeout(()=>window.print(),120);
-}
-function previewQuoteV050(){
-  if(!v050BuildDedicatedQuote())return;
-  quoteDocument.innerHTML=document.getElementById("quoteDedicatedPrint").innerHTML;
-  quoteEditor.style.display="none";
-  quotePreviewWrap.style.display="block";
-}
-window.printQuote=printQuoteV050;
-window.previewQuote=previewQuoteV050;
-</script>
-</body></html>`;
+</head><body><main class="quote-doc">${body}<div class="quote-signatures"><div class="quote-signature">אישור הלקוח · שם / חתימה / תאריך</div><div class="quote-signature">נגריית משמר העמק · חתימה / תאריך</div></div></main><script>window.onload=function(){setTimeout(function(){window.print()},180)}<\/script><div id="quoteDedicatedPrint" style="display:none"></div></body></html>`;
   const w=window.open("","_blank");
   if(!w){alert("הדפדפן חסם את חלון ההדפסה. יש לאפשר חלונות קופצים לאתר ולנסות שוב.");return;}
   w.document.open();w.document.write(doc);w.document.close();
@@ -2627,4 +2474,175 @@ function printQuoteV049(){
 if(typeof window.printQuote==="function") window.printQuoteLegacyV048=window.printQuote;
 window.printQuote=printQuoteV049;
 </script>
-<div id="quoteDedicatedPrint" style="display:none"></div></body></html>
+<div id="quoteDedicatedPrint" style="display:none"></div>
+<script id="v051-quote-fix">
+/* v0.51 — PDF/preview uses the CURRENT quote editor state:
+   checked furniture, current row details, payment terms, validity and payment method. */
+function v051QuoteEditorData(){
+  const project=(db.projects||[]).find(p=>String(p.id)===String(qproject.value))||{};
+  const items=(typeof quoteSelectedItems==="function") ? quoteSelectedItems() : [];
+  const paymentRows=(typeof readPaymentRows==="function") ? readPaymentRows("qPaymentRows") : [];
+  const subtotal=items.reduce((sum,it)=>sum+(Number(it.price)||0),0);
+  const vat=subtotal*.18;
+  const total=subtotal+vat;
+  const now=new Date();
+  const valid=new Date(now);
+  valid.setDate(valid.getDate()+(Number(qvalidDays.value)||30));
+  return {
+    project,items,paymentRows,subtotal,vat,total,
+    number:qnum.value||"",
+    version:qver.value||1,
+    date:now.toLocaleDateString("he-IL"),
+    validUntil:valid.toLocaleDateString("he-IL"),
+    paymentMethod:(qpaymentMethod.value||"").trim(),
+    notes:(qnotes.value||"").trim()
+  };
+}
+
+function v051BuildDedicatedQuote(){
+  const d=v051QuoteEditorData();
+  if(!qproject.value){alert("בחר פרויקט");return false}
+  if(!d.items.length){alert("בחר לפחות רהיט אחד להצעה");return false}
+
+  const pct=d.paymentRows.reduce((a,r)=>a+(Number(r.percent)||0),0);
+  if(!d.paymentRows.length){alert("יש להגדיר תנאי תשלום");return false}
+  if(Math.abs(pct-100)>.001){
+    alert("סך אחוזי התשלום הוא "+pct+"%. יש להגיע ל-100%.");
+    return false;
+  }
+
+  const services=[
+    "מדידות סופיות באתר לפי התכנית",
+    "הובלה לבית הלקוח",
+    "ייצור והתקנה",
+    "אחריות של 5 שנים על העבודה והפרזול"
+  ];
+
+  const itemRows=d.items.map((it,i)=>{
+    const f=(db.furniture||[]).find(x=>String(x.id)===String(it.id))||{};
+    const dims=f.dimensions||f.size||f.dims||"—";
+    const second=(it.name && it.description!==it.name) ? "<br><small>"+v049Esc(it.name)+"</small>" : "";
+    return "<tr>"+
+      "<td>"+(i+1)+"</td>"+
+      "<td><b>"+v049Esc(it.description||it.name||"רהיט")+"</b>"+second+"</td>"+
+      "<td>"+v049Esc(dims)+"</td>"+
+      "<td>"+v049Esc(it.finish||"—")+"</td>"+
+      "<td>"+v049Esc(it.notes||"")+"</td>"+
+      "<td><b>"+v049Money(it.price)+"</b></td>"+
+    "</tr>";
+  }).join("");
+
+  const paymentRows=d.paymentRows.map((r,i)=>{
+    const amount=d.total*(Number(r.percent)||0)/100;
+    return "<tr>"+
+      "<td>"+(i+1)+"</td>"+
+      "<td>"+v049Esc(r.label||("שלב "+(i+1)))+"</td>"+
+      "<td>"+(Number(r.percent)||0)+"%</td>"+
+      "<td>"+v049Esc(r.trigger||"")+"</td>"+
+      "<td>"+v049Money(amount)+"</td>"+
+    "</tr>";
+  }).join("");
+
+  const paymentMethodHtml=d.paymentMethod
+    ? '<div style="padding:10px 12px;font-size:12px"><b>אופן התשלום:</b> '+v049Esc(d.paymentMethod)+'</div>'
+    : "";
+
+  const notesHtml=d.notes
+    ? '<div class="quote-notes"><h3>הערות</h3><div class="body">'+v049Esc(d.notes)+'</div></div>'
+    : "";
+
+  const doc =
+  '<div class="quote-print-page">'+
+    '<div class="quote-print-head">'+
+      '<div class="quote-logo-wrap"><img src="'+V049_LOGO+'" alt="לוגו נגריית משמר העמק"></div>'+
+      '<div class="quote-print-title">'+
+        '<h1>הצעת מחיר ומפרט טכני עבור</h1>'+
+        '<div class="subtitle">'+v049Esc(d.project.name||"")+'</div>'+
+      '</div>'+
+      '<div class="quote-company">'+
+        '<h2>נגריית משמר העמק</h2>'+
+        '<div>קיבוץ משמר העמק</div>'+
+        '<div>טלפון: 050-1234567</div>'+
+        '<div>nagria.mishmar@gmail.com</div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="quote-two-col">'+
+      '<div class="quote-meta-box">'+
+        '<div class="quote-meta-row"><b>מספר הצעה:</b><span>'+v049Esc(d.number)+'</span></div>'+
+        '<div class="quote-meta-row"><b>תאריך:</b><span>'+v049Esc(d.date)+'</span></div>'+
+        '<div class="quote-meta-row"><b>תקף עד:</b><span>'+v049Esc(d.validUntil)+'</span></div>'+
+      '</div><div></div>'+
+    '</div>'+
+
+    '<div class="quote-two-col">'+
+      '<div class="quote-box"><h3>פרטי הפרויקט</h3>'+
+        '<div class="row"><b>שם הפרויקט:</b><span>'+v049Esc(d.project.name||"")+'</span></div>'+
+        '<div class="row"><b>כתובת:</b><span>'+v049Esc(d.project.address||"")+'</span></div>'+
+      '</div>'+
+      '<div class="quote-box"><h3>פרטי הלקוח</h3>'+
+        '<div class="row"><b>שם הלקוח:</b><span>'+v049Esc(d.project.name||"")+'</span></div>'+
+        '<div class="row"><b>טלפון:</b><span>'+v049Esc(d.project.phone||"")+'</span></div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="quote-items-wrap">'+
+      '<div class="quote-items-title">פריטים בהצעה</div>'+
+      '<table class="quote-items-table">'+
+        '<thead><tr><th>מס׳</th><th>תיאור הרהיט</th><th>מידות</th><th>גמר חזית</th><th>הערות</th><th>מחיר לפני מע״מ</th></tr></thead>'+
+        '<tbody>'+itemRows+'</tbody>'+
+      '</table>'+
+    '</div>'+
+
+    '<div class="quote-bottom-grid">'+
+      '<div class="quote-total-box"><h3>מחיר ההצעה</h3>'+
+        '<div class="quote-total-row"><span>מחיר לפני מע״מ</span><b>'+v049Money(d.subtotal)+'</b></div>'+
+        '<div class="quote-total-row"><span>מע״מ 18%</span><b>'+v049Money(d.vat)+'</b></div>'+
+        '<div class="quote-total-row grand"><span>סה״כ כולל מע״מ</span><b>'+v049Money(d.total)+'</b></div>'+
+      '</div>'+
+      '<div class="quote-services-box"><h3>השירותים הכלולים</h3>'+
+        '<div class="quote-services-list">'+services.map(s=>'<div class="quote-service">'+v049Esc(s)+'</div>').join("")+'</div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="quote-payments"><h3>תנאי תשלום</h3>'+
+      '<table><thead><tr><th>שלב</th><th>שם</th><th>אחוז מהעסקה</th><th>מועד / תנאי לתשלום</th><th>סכום</th></tr></thead>'+
+      '<tbody>'+paymentRows+'</tbody></table>'+
+      paymentMethodHtml+
+    '</div>'+
+    notesHtml+
+
+    '<div class="quote-signatures">'+
+      '<div class="quote-sign"><b>אישור הלקוח</b><br><br>שם: ____________ &nbsp;&nbsp; חתימה: ____________ &nbsp;&nbsp; תאריך: ____________</div>'+
+      '<div class="quote-sign"><b>נגריית משמר העמק</b><br><br>חתימה: ____________ &nbsp;&nbsp; תאריך: ____________</div>'+
+    '</div>'+
+    '<div class="quote-thanks">תודה על האמון שנתתם בנו. נשמח לעמוד לשירותכם בכל שאלה.</div>'+
+  '</div>';
+
+  const target=document.getElementById("quoteDedicatedPrint");
+  target.innerHTML=doc;
+  return true;
+}
+
+function printQuoteV051(){
+  if(!v051BuildDedicatedQuote())return;
+  document.body.classList.add("quote-printing");
+  const cleanup=()=>{
+    document.body.classList.remove("quote-printing");
+    window.removeEventListener("afterprint",cleanup);
+  };
+  window.addEventListener("afterprint",cleanup);
+  setTimeout(()=>window.print(),120);
+}
+
+function previewQuoteV051(){
+  if(!v051BuildDedicatedQuote())return;
+  quoteDocument.innerHTML=document.getElementById("quoteDedicatedPrint").innerHTML;
+  quoteEditor.style.display="none";
+  quotePreviewWrap.style.display="block";
+}
+
+window.printQuote=printQuoteV051;
+window.previewQuote=previewQuoteV051;
+</script>
+</body></html>
